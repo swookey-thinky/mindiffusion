@@ -13,6 +13,16 @@ Each lesson is in its own subdirectory, and we have ordered the lessons in histo
 
 Since every lesson is meant to be trained in real time with minimal cost, most of the lessons are restricted to training on the MNIST dataset, simply because it is quick to train and easy to visualize.
 
+## Requirements for All Lessons
+
+All lessons are built using PyTorch and written in Python 3. To setup an environment to run all of the lessons, we suggest using conda or venv:
+
+```
+> python -m venv mindiffusion_env
+> source mindiffusion_env/bin/activate
+> pip install -upgrade pip
+> pip install -r requirements.txt
+```
 
 ## Table of Lessons
 
