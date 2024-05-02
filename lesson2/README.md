@@ -5,7 +5,7 @@ In this lesson, we are going to implement the diffusion model presented in the 2
 
 The original code for this paper can be found [here](https://github.com/Sohl-Dickstein/Diffusion-Probabilistic-Models/tree/master). The original repository is written in Theano, and given the age of the repository, and more importantly the age of its dependencies, can be challenging to get running. But fret not, we will refer to the code where necessary, and will reimplement everything we need in PyTorch to see how it works.
 
-In this colab, we will be working with the [MNIST](https://en.wikipedia.org/wiki/MNIST_database) dataset because it is simple and can be trained in real time with minimal GPU power and memory. The main difference between MNIST and other datasets is the single channel of the imagery, versus 3 channels in most other datasets. We will make sure that the models we build can easily accomodate 1- or 3-channel data, so that you can test the models we build on other datasets.
+In this repository, we will be working with the [MNIST](https://en.wikipedia.org/wiki/MNIST_database) dataset because it is simple and can be trained in real time with minimal GPU power and memory. The main difference between MNIST and other datasets is the single channel of the imagery, versus 3 channels in most other datasets. We will make sure that the models we build can easily accomodate 1- or 3-channel data, so that you can test the models we build on other datasets.
 
 ## Setting Up Your Environment
 
