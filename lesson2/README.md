@@ -20,3 +20,9 @@ To train the model, simply run the `train_mnist.py` script under this directory 
 ```
 
 Output files (including sample generated images of the model in progress) are stored by timestep in the `output` directory.
+
+## Results
+
+After training the network for 30k steps, the model is able to generate samples like:
+
+![DPM](https://drive.google.com/uc?export=view&id=1556PI3SfzAUuaV5sj484Kn8pR6Ij_KOT)
