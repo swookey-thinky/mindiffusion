@@ -1,3 +1,13 @@
+"""Network to predict the mean and covariance for diffusion learning.
+
+This package implements the neural network to learn the mean and covariance
+of the reverse diffusion process, from the paper "Deep Unsupervised Learning using Nonequilibrium Thermodynamics"
+(https://arxiv.org/abs/1503.03585).
+
+It is based on the Theano code located at:
+https://github.com/Sohl-Dickstein/Diffusion-Probabilistic-Models/
+"""
+
 import math
 import torch
 
@@ -8,6 +18,13 @@ class MeanAndCovarianceNetwork(torch.nn.Module):
     def __init__(
         self, num_timesteps: int, spatial_width: int = 28, input_channels: int = 1
     ):
+        """Initalize the network.
+
+        Args:
+            num_timesteps: The number of timesteps in the forward/reverse diffusion process.
+            spatial_width: The spatial width of the input data (28 for MNIST)
+            input_channels: The number of channels in the input data (1 for MNIST).
+        """
         super().__init__()
 
         # Helper function to register buffer from float64 to float32
@@ -127,6 +144,18 @@ class MeanAndCovarianceNetwork(torch.nn.Module):
         )
 
     def forward(self, x, t):
+        """Define the computation performed at every call.
+
+        Runs the model to predict the mean and covariance of the reverse
+        diffusion process at timestep t.
+
+        Args:
+            x: Tensor batch of normalized image data, of shape (B, C, H, W)
+            t: Batch of integer timesteps, in the range [1, num_timesteps]
+
+        Returns:
+            mean and covariance of predicted by the network.
+        """
         B, C, H, W = x.shape
 
         # Apply the lower convolutions
@@ -161,6 +190,21 @@ class MeanAndCovarianceNetwork(torch.nn.Module):
         return mu, sigma
 
     def _temporal_readout(self, x, Y, t):
+        """Calculate the temporal readout of the upper layers.
+
+        Applies the temporal basis functions to the intermediate
+        output of the model to generate the mean and covariance for
+        each timestep.
+
+        This implements Eq. 63 from section D.2.1 in the paper.
+
+        Args:
+            x: Tensor batch of normalized image data, in the shape (B, C, H, W)
+            Y: The output of the upper convolutional/dense layers
+            t: Batch of integer timesteps.
+        Returns:
+            The mean and covariance for the given timesteps.
+        """
         B, C, H, W = x.shape
 
         # Go from the top layer of the multilayer perceptron to coefficients for
@@ -203,7 +247,15 @@ def generate_temporal_basis(num_timesteps: int, num_temporal_basis: int):
     """Generates the temporal basis "bump" functions.
 
     Outputs a (num_temporal_basis, num_timesteps) matrix of temporal
-    basis coefficents.
+    basis coefficents, using Eq. 63 from the paper.
+
+    Args:
+        num_timesteps: The number of timesteps in the forward/reverse diffusion process.
+        num_temporal_basis: The number of "bump" functions to use.
+
+    Returns:
+        A tensor of temporal coefficients of shape (num_temporal_basis, num_timesteps)
+
     """
     # (T, B) array
     temporal_basis = torch.zeros((num_timesteps, num_temporal_basis))

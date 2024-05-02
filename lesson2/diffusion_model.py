@@ -13,11 +13,18 @@ from utils import (
 class GaussianDiffusion_DPM(torch.nn.Module):
     """Core DPM algorithm.
 
-    Defines the core DDPM diffusion algorithm for training and sampling. This implements
-    Algorithms 1 and 2 from the DDPM paper.
+    This implements the training loss, forward process, and reverse process
+    for a Diffusion Probabilistic Model based on the paper
+    "Deep Unsupervised Learning using Nonequilibrium Thermodynamics"
+    (https://arxiv.org/abs/1503.03585).
     """
 
     def __init__(self, num_timesteps: int):
+        """Initialized the module.
+
+        Args:
+            num_timesteps: The number of steps in the forward/reverse diffusion process.
+        """
         super().__init__()
 
         self._num_timesteps = num_timesteps
@@ -25,7 +32,16 @@ class GaussianDiffusion_DPM(torch.nn.Module):
         # Build the mu,sigma prediction model
         self._mu_sigma_predictor = MeanAndCovarianceNetwork(num_timesteps=num_timesteps)
 
-    def calculate_loss_on_batch(self, x: torch.TensorType):
+    def calculate_loss_on_batch(self, x: torch.Tensor):
+        """Calculates the loss on a batch of image data.
+
+        Args:
+            x: A batch of normalized image data, of shape (B, C, H, W)
+
+        Returns:
+            The loss, based on the negative log likelihood bound of the reverse
+            process.
+        """
         B, C, H, W = x.shape
         device = x.device
 
@@ -68,6 +84,11 @@ class GaussianDiffusion_DPM(torch.nn.Module):
         The forward diffusion process (q(x)) corrupts a training sample
         with t steps of Gaussian noise, returning the corrupted sample,
         as well as the mean and the covariance of the posterior q(x^{t-1}|x^t, x^0).
+
+        Args:
+            x: A tensor batch of normalized image data, of shape (B, C, H, W)
+            num_timesteps: The number of timesteps in the forward/reverse diffusion process.
+            fixed_t: [Optional] The timesteps to use for diffusion, otherwise random.
         """
         B, C, H, W = x.shape
         device = x.device
@@ -113,6 +134,15 @@ class GaussianDiffusion_DPM(torch.nn.Module):
         return x_noisy, t, mu, sigma
 
     def reverse_diffusion_single_step(self, x_t: torch.Tensor, t: torch.Tensor):
+        """Single step of the reverse diffusion process.
+
+        Args:
+            x_t: Tensor batch of normalized image data at timestep t
+            t: Tensor batch of the current integer timestep
+
+        Returns:
+            Tensor batch of image data at timestep t-1.
+        """
         assert t[0] != 0
         mu, sigma = self._mu_sigma_predictor(x_t, t)
         x_t_minus_1 = mu + torch.randn_like(x_t) * sigma
@@ -122,6 +152,20 @@ class GaussianDiffusion_DPM(torch.nn.Module):
     def reverse_diffusion_full_trajectory(
         self, num_timesteps: int, num_samples: int, device, spatial_width: int = 28
     ):
+        """Full reverse diffusion process.
+
+        Starting with Gaussian noise, reverse diffuse the data for the
+        given number of timessteps.
+
+        Args:
+            num_timesteps: The number of timesteps in the reverse diffusion process.
+            num_samples: The number of samples to generate.
+            spatial_width: The spatial width of the data.
+
+        Returns:
+            Batch of num_samples denoised images after running num_timesteps of
+            reverse diffusion.
+        """
         with torch.inference_mode():
             # The reverse process starts with isotropic Gaussian noise
             x_t = torch.randn(
@@ -156,6 +200,19 @@ class GaussianDiffusion_DPM(torch.nn.Module):
         """
         Calculates the negative log likelihood bound between the forward
         process posterior q (x_{t-1} | x_t) and the reverse process p(x_{t-1} | x_t).
+
+        This is Eq. 14 from the paper.
+
+        Args:
+            mu: The prediction of the reverse process mean.
+            sigma: The prediction of the reverse process covariance.
+            mu_posterior: The mean of the forward process.
+            sigma_posterior: The covariance of the forward process.
+            num_timesteps: The number of timesteps in the forward/reverse process.
+            betas: Tensor batch of variances used in training/sampling.
+
+        Returns:
+            The negative log likelihood bound on the reverse process transition.
         """
         device = mu.device
 

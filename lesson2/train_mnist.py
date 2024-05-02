@@ -1,3 +1,17 @@
+"""Lesson 2 - Diffusion Probabilistic Models
+
+Training script for training a Gaussian Diffusion Model from
+"Deep Unsupervised Learning using Nonequilibrium Thermodynamics"
+(https://arxiv.org/abs/1503.03585) on the MNIST dataset.
+
+To run this script, install all of the necessary requirements
+and run:
+
+```
+python train_mnist.py
+```
+"""
+
 from accelerate import Accelerator, DataLoaderConfiguration
 import argparse
 import math
@@ -16,6 +30,7 @@ from utils import (
     mnist_unnormalize,
 )
 
+# All results are stored into this directory.
 OUTPUT_NAME = "output"
 
 
@@ -51,6 +66,7 @@ def run_lesson_2(num_training_steps: int, batch_size: int):
         dtypes=[torch.float32, torch.int64],
     )
 
+    # Use the accelerate library to handle all of our device management.
     accelerator = Accelerator(
         DataLoaderConfiguration(split_batches=False), mixed_precision="no"
     )
@@ -93,6 +109,7 @@ def run_lesson_2(num_training_steps: int, batch_size: int):
 
             # Calculate the gradients at each step in the network.
             accelerator.backward(loss)
+
             # On a multi-gpu machine or cluster, wait for all of the workers
             # to finish.
             accelerator.wait_for_everyone()
