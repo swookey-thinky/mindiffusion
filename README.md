@@ -20,7 +20,7 @@ All lessons are built using PyTorch and written in Python 3. To setup an environ
 ```
 > python3 -m venv mindiffusion_env
 > source mindiffusion_env/bin/activate
-> pip install -upgrade pip
+> pip install --upgrade pip
 > pip install -r requirements.txt
 ```
 
