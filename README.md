@@ -18,11 +18,13 @@ Since every lesson is meant to be trained in real time with minimal cost, most o
 All lessons are built using PyTorch and written in Python 3. To setup an environment to run all of the lessons, we suggest using conda or venv:
 
 ```
-> python -m venv mindiffusion_env
+> python3 -m venv mindiffusion_env
 > source mindiffusion_env/bin/activate
 > pip install -upgrade pip
 > pip install -r requirements.txt
 ```
+
+All lessons are designed to be run *in the lesson directory*, not the root of the repository.
 
 ## Table of Lessons
 
