@@ -1,4 +1,5 @@
 # Zero-to-Hero - Diffusion Models
+![Zero to Hero](https://drive.google.com/uc?export=view&id=1FfH6643JCYjnCq2JKFPs9wH64W_Rm_B2)
 
 Repository of lessons exploring image diffusion models, focused on understanding and education.
 
