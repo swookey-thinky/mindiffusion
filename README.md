@@ -1,7 +1,19 @@
-# mindiffusion
+# Zero-to-Hero - Diffusion Models
+
 Repository of lessons exploring image diffusion models, focused on understanding and education.
 
-# Table of Lessons
+## Introduction
+
+This series is heavily inspired by Andrej Karpathy's [Zero to Hero](https://www.youtube.com/playlist?list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ) series of videos. Well, actually, we are straight out copying that series, because they are so good. Seriously, if you haven't followed his videos, go do that now - lot's of great stuff in there!
+
+Each lesson contains both an explanatory video which walks you through the lesson and the code, a colab notebook that corresponds to the video material, and a a pointer to the runnable code in github. All of the code is designed to run on a minimal GPU. We test everything on T4 instances, since that is what colab provides at the free tier, and they are cheap to run on AWS as stand alone instances. Theoretically each of the lessons should be runnable on any 8GB or greater GPU, as they are all designed to be trained in real time on minimal hardware, so that we can really dive into the code.
+
+Each lesson is in its own subdirectory, and we have ordered the lessons in historical order (from oldest to latest) so that its easy to trace the development of the research and see the historical progress of this space.
+
+Since every lesson is meant to be trained in real time with minimal cost, most of the lessons are restricted to training on the MNIST dataset, simply because it is quick to train and easy to visualize.
+
+
+## Table of Lessons
 
 
 Lesson | Date | Name |Title
