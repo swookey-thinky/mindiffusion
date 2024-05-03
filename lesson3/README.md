@@ -1,4 +1,4 @@
-# Lesson 2 - Diffusion Probabilistic Models
+# Lesson 3 - Noise Conditioned Score Networks
 
 In this lesson we are going to implement the diffusion model presented in the 2019 paper [Generative Modeling by Estimating Gradients of the Data Distribution](https://arxiv.org/abs/1907.05600) which introduced Noise Conditioned Score Networks (NCSN).
 
