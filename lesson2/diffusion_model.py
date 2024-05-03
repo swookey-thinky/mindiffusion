@@ -1,3 +1,10 @@
+"""Forward and reverse diffusion processes.
+
+This package implements the forward and reverse diffusion processes from
+the paper "Deep Unsupervised Learning using Nonequilibrium Thermodynamics"
+(https://arxiv.org/abs/1503.03585).
+"""
+
 import numpy as np
 from tqdm import tqdm
 from typing import Optional
