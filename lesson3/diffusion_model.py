@@ -89,8 +89,8 @@ class GaussianDiffusion_NCSN(torch.nn.Module):
         Args:
             scorenet: The score network used to predict the mean and variance of
                 the reverse process.
-            samples: Tensor batch of samples used for prediction
-            labels: Tensor batch of integer indices into the variance array (sigmas)
+            x: Tensor batch of samples used for prediction
+            y: Tensor batch of integer indices into the variance array (sigmas)
             anneal_power: Constant used for annealing the loss.
 
         Returns:
