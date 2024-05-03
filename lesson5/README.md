@@ -21,6 +21,6 @@ Output files (including sample generated images of the model in progress) are st
 
 ## Results
 
-After training the network for 30k steps, the model is able to generate samples like:
+After training the network for 10k steps, the model is able to generate samples like:
 
 ![DDPM](https://drive.google.com/uc?export=view&id=11T1_dJv0TtYh47g9qCIcRAmHyO566QOo)
