@@ -12,7 +12,7 @@ python train_mnist.py
 ```
 """
 
-from accelerate import Accelerator
+from accelerate import Accelerator, DataLoaderConfiguration
 import argparse
 import math
 import os
@@ -63,7 +63,9 @@ def run_lesson_5(num_training_steps: int, batch_size: int):
     summary(diffusion_model._unet, [(128, 1, 32, 32), (128,)])
 
     # The accelerate library will handle of the GPU device management for us.
-    accelerator = Accelerator(split_batches=False, mixed_precision="no")
+    accelerator = Accelerator(
+        DataLoaderConfiguration(split_batches=False), mixed_precision="no"
+    )
     device = accelerator.device
 
     # Prepare the dataset with the accelerator. This makes sure all of the
