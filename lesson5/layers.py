@@ -1,4 +1,4 @@
-"""Utility layers used in defining a Noise Conditioned Score Network."""
+"""Utility layers used in defining a Denoising Diffusion Probabilistic Model."""
 
 import math
 import torch
