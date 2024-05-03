@@ -168,7 +168,7 @@ def run_lesson_4(num_training_steps: int, batch_size: int, resume_ckpt: str):
                         "optimizer_state_dict": optimizer.state_dict(),
                         "loss": loss,
                     },
-                    f"{OUTPUT_NAME}/gaussian_diffusion_dpm-{step}.pt",
+                    f"{OUTPUT_NAME}/gaussian_diffusion_ncsn_v2-{step}.pt",
                 )
 
                 del ema_model
