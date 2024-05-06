@@ -24,5 +24,4 @@ Output files (including sample generated images of the model in progress) are st
 
 After training the network for 10k steps, the model is able to generate samples like:
 
-TODO!!!
-![DDPM](https://drive.google.com/uc?export=view&id=1bkSdBlvli5U2Lle9ELd2mXqZ6T0hxj6k)
+![DDPM Dropout](https://drive.google.com/uc?export=view&id=1z-zxipsrzeiwj6-bwL8EwExp026PAcMr)
