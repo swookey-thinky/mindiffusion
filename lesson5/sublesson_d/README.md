@@ -24,6 +24,4 @@ Output files (including sample generated images of the model in progress) are st
 
 ## Results
 
-Here is an example of generating only the class `5`, to show how we can control the image generation process through class conditioning.
-
-![Class Conditioning](https://drive.google.com/uc?export=view&id=1vyNRZ06mTy3-_jqzbevm_Iz0fnE7PUND)
+TODO!!
