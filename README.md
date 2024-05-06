@@ -32,15 +32,15 @@ All lessons are designed to be run *in the lesson directory*, not the root of th
 Lesson | Date | Name |Title|Video|Colab|Code
 :---- | :---- | :---- | ---- | ---- | ----| ----
 1 |  | | Introduction to Diffusion Models | | [colab](https://colab.research.google.com/drive/1BPSG4SA21T8yx8oYqtsx_cYBwNvBtrvt#scrollTo=wAZDhI2JSPnV) |
-2 | March 2015 | DPM | [Deep Unsupervised Learning using Nonequilibrium Thermodynamics](https://arxiv.org/abs/1503.03585) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson2)
-3 | July 2019 | NCSN | [Generative Modeling by Estimating Gradients of the Data Distribution](https://arxiv.org/abs/1907.05600) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson3)
-4 | June 2020 | NCSNv2 | [Improved Techniques for Training Score-Based Generative Models](https://arxiv.org/abs/2006.09011) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson4)
-5 | June 2020 | DDPM | [Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5)
-5a |  |  | DDPM with Dropout | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_a)
-5b |  |  | Interpolation in Latent Space | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_b)
-5c |  |  | Adding Control - Basic Class Conditioning with Cross-Attention | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_c)
-5d |  |  | Adding Control - Extended Class Conditioning | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_d)
-5e |  |  | Adding Control - Text-to-Image | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_e)
+2 | March 2015 | DPM | [Deep Unsupervised Learning using Nonequilibrium Thermodynamics](https://arxiv.org/abs/1503.03585) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_02)
+3 | July 2019 | NCSN | [Generative Modeling by Estimating Gradients of the Data Distribution](https://arxiv.org/abs/1907.05600) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_03)
+4 | June 2020 | NCSNv2 | [Improved Techniques for Training Score-Based Generative Models](https://arxiv.org/abs/2006.09011) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_04)
+5 | June 2020 | DDPM | [Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_05)
+5a |  |  | DDPM with Dropout | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_05/sublesson_a)
+5b |  |  | Interpolation in Latent Space | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_05/sublesson_b)
+5c |  |  | Adding Control - Basic Class Conditioning with Cross-Attention | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_05/sublesson_c)
+5d |  |  | Adding Control - Extended Class Conditioning | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_05/sublesson_d)
+5e |  |  | Adding Control - Text-to-Image | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_05/sublesson_e)
 6 | October 2020 | DDIM | [Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502) | | |
 7 | November 2020 | Score SDE | [Score-Based Generative Modeling through Stochastic Differential Equations](https://arxiv.org/abs/2011.13456) | | |
 8 | February 2021 | DaLL-E | [Zero-Shot Text-to-Image Generation](https://arxiv.org/abs/2102.12092) | | |
