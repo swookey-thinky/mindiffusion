@@ -1,4 +1,4 @@
-# Lesson 5c - Denoising Diffusion Probabilistic Models - Class Conditioning
+# Lesson 5c - Denoising Diffusion Probabilistic Models - Basic Class Conditioning
 
 This lesson explores using control mechanisms to conditionally generate samples of the class we want. So far, all of the diffusion models we have explored have been *unconditional* diffusion models - you have no control over what the final image looks like. However, most of the popular image generators you have used are *conditional* diffusion models - you can control what images are generated through a conditioning mechanism, typically a text caption to describe the output or a reference image to generate a similar image. In this lesson, we are going to add conditional control, specifically class conditioning, to the diffusion model, to demonstrate one approach to controlling the output of the image generation process. In later lessons, we will extend this conditioning to other modalities, until we have replicated the text-to-image functionality present in public image generation applications. 
 
