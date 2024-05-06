@@ -39,8 +39,8 @@ Lesson | Date | Name |Title|Video|Colab|Code
 5a |  |  | DDPM with Dropout | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_a)
 5b |  |  | Interpolation in Latent Space | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_b)
 5c |  |  | Adding Control - Basic Class Conditioning with Cross-Attention | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_c)
-5d |  |  | Adding Control - Extended Class Conditioning | | | 
-5e |  |  | Adding Control - Text-to-Image | | | 
+5d |  |  | Adding Control - Extended Class Conditioning | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_d)
+5e |  |  | Adding Control - Text-to-Image | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_e)
 6 | October 2020 | DDIM | [Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502) | | |
 7 | November 2020 | Score SDE | [Score-Based Generative Modeling through Stochastic Differential Equations](https://arxiv.org/abs/2011.13456) | | |
 8 | February 2021 | DaLL-E | [Zero-Shot Text-to-Image Generation](https://arxiv.org/abs/2102.12092) | | |
