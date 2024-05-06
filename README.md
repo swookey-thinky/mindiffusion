@@ -38,8 +38,8 @@ Lesson | Date | Name |Title|Video|Colab|Code
 5 | June 2020 | DDPM | [Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5)
 5a |  |  | DDPM with Dropout | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_a)
 5b |  |  | Interpolation in Latent Space | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson5/sublesson_b)
-5c |  |  | Adding Control - Basic Class Conditioning | | | 
-5d |  |  | Adding Control - Improved Conditioning with Cross-Attention | | | 
+5c |  |  | Adding Control - Basic Class Conditioning with Cross-Attention | | | 
+5d |  |  | Adding Control - Improved Conditioning | | | 
 5e |  |  | Adding Control - Text-to-Image | | | 
 6 | October 2020 | DDIM | [Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502) | | |
 7 | November 2020 | Score SDE | [Score-Based Generative Modeling through Stochastic Differential Equations](https://arxiv.org/abs/2011.13456) | | |
