@@ -46,7 +46,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 8 | February 2021 | DaLL-E | [Zero-Shot Text-to-Image Generation](https://arxiv.org/abs/2102.12092) | | |
 9 | February 2021 | IDDPM | [Improved Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2102.09672) | | |
 10 | May 2021 | Guided Diffusion | [Diffusion Models Beat GANs on Image Synthesis](https://arxiv.org/abs/2105.05233) | | |
-11 | December 2021 | Latent Diffusion | [High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752) | | |
+11 | December 2021 | Latent Diffusion | [High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_11)
 11a | | Stable Diffusion v1 | | | |
 11b | | Stable Diffusion v2 | | | |
 12 | April 2022 | DaLL-E 2| [Hierarchical Text-Conditional Image Generation with CLIP Latents](https://arxiv.org/abs/2204.06125) | | |
