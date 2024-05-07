@@ -22,4 +22,23 @@ Output files (including sample generated images of the model in progress) are st
 
 ## Results
 
-TODO!!
+Here is the result of unconditionally sampling the model after 10k steps of training:
+
+![DDPM Unconditional](https://drive.google.com/uc?export=view&id=1CXVJMTa9ByaBPvfOTwE3cqOMzTWiy1z_)
+
+And here is the result of conditionally sampling the model, after 10k steps of training. For conditioning,
+we used the following text prompts:
+<pre>
+five 1 eight zero five 2 two four 
+6 eight 6 zero 9 six 6 four 
+1 7 3 5 seven 9 9 five 
+zero one 8 four nine zero one 7 
+three two 9 1 eight one 7 2 
+2 eight 8 5 two one three nine 
+zero seven three 8 5 2 two two 
+7 four one nine five 2 1 0 
+</pre>
+
+![DDPM Conditional](https://drive.google.com/uc?export=view&id=1QgsVUes3s5JT864HVJ9Cg8pp57nzK4fp)
+
+As you can see, the model has successfully learned how to generate instances of the requested classes.
