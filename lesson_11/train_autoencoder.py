@@ -184,7 +184,7 @@ def main(override=None):
     Main entrypoint for the standalone version of this package.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--num_training_steps", type=int, default=10000)
+    parser.add_argument("--num_training_steps", type=int, default=30000)
     parser.add_argument("--batch_size", type=int, default=128)
     args = parser.parse_args()
 
