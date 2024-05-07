@@ -1,4 +1,4 @@
-from accelerate import Accelerator
+from accelerate import Accelerator, DataLoaderConfiguration
 import argparse
 from functools import partial
 import math
@@ -66,7 +66,8 @@ def run_lesson_11(
         model_initial_channels=model_dimension,
         model_channel_multipliers=[1, 2, 2],
         spatial_width=8,
-        attention_resolutions=[2],
+        attention_resolutions=[4],
+        dropout=0.1,
     )
 
     # Create and load the VAE
@@ -88,11 +89,13 @@ def run_lesson_11(
     # The text encoder generates embeddings of size (B, text_encoder_max_length, context_dimension)
     summary(
         diffusion_model._unet,
-        [(128, 1, 8, 8), (128,), (128, text_encoder_max_length, context_dimension)],
+        [(128, 1, 32, 32), (128,), (128, text_encoder_max_length, context_dimension)],
     )
 
     # The accelerate library will handle of the GPU device management for us.
-    accelerator = Accelerator(split_batches=False, mixed_precision="no")
+    accelerator = Accelerator(
+        DataLoaderConfiguration(split_batches=False), mixed_precision="no"
+    )
     device = accelerator.device
 
     # Prepare the dataset with the accelerator. This makes sure all of the

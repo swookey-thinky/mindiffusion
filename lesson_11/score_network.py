@@ -84,13 +84,13 @@ class ConditionalMNistUNet(torch.nn.Module):
         for layer_idx in range(number_of_layers):
 
             layer_input_channels = (
-                channels[layer_idx] if layer_idx != 0 else input_channels
+                channels[layer_idx-1] if layer_idx != 0 else input_channels
             )
             layer_output_channels = channels[layer_idx]
 
             attention_block1 = (
                 Identity()
-                if layer_idx not in attention_resolutions
+                if layer_resolution not in attention_resolutions
                 else SpatialTransformer(
                     in_channels=layer_output_channels,
                     n_heads=1,
@@ -102,7 +102,7 @@ class ConditionalMNistUNet(torch.nn.Module):
 
             attention_block2 = (
                 Identity()
-                if layer_idx not in attention_resolutions
+                if layer_resolution not in attention_resolutions
                 else SpatialTransformer(
                     in_channels=layer_output_channels,
                     n_heads=1,
@@ -144,7 +144,8 @@ class ConditionalMNistUNet(torch.nn.Module):
                 ]
             )
             down_layers.append(layer)
-            layer_resolution = layer_resolution // 2
+            if layer_idx < (number_of_layers - 1):
+                layer_resolution = layer_resolution // 2
         self.downs = torch.nn.ModuleList(down_layers)
 
         # Middle layers
@@ -186,7 +187,7 @@ class ConditionalMNistUNet(torch.nn.Module):
 
             attention_block1 = (
                 Identity()
-                if layer_idx not in attention_resolutions
+                if layer_resolution not in attention_resolutions
                 else SpatialTransformer(
                     in_channels=layer_input_channels,
                     n_heads=1,
@@ -198,7 +199,7 @@ class ConditionalMNistUNet(torch.nn.Module):
 
             attention_block2 = (
                 Identity()
-                if layer_idx not in attention_resolutions
+                if layer_resolution not in attention_resolutions
                 else SpatialTransformer(
                     in_channels=layer_input_channels,
                     n_heads=1,
@@ -210,7 +211,7 @@ class ConditionalMNistUNet(torch.nn.Module):
 
             attention_block3 = (
                 Identity()
-                if layer_idx not in attention_resolutions
+                if layer_resolution not in attention_resolutions
                 else SpatialTransformer(
                     in_channels=layer_output_channels,
                     n_heads=1,
@@ -224,8 +225,8 @@ class ConditionalMNistUNet(torch.nn.Module):
                 torch.nn.Sequential(
                     torch.nn.Upsample(scale_factor=2, mode="nearest"),
                     torch.nn.Conv2d(
-                        channels[layer_output_channels],
-                        channels[layer_output_channels],
+                        layer_output_channels,
+                        layer_output_channels,
                         3,
                         padding=1,
                     ),
@@ -237,25 +238,22 @@ class ConditionalMNistUNet(torch.nn.Module):
             layer = torch.nn.ModuleList(
                 [
                     ResnetBlock(
-                        dim=channels[layer_input_channels]
-                        + channels[layer_input_channels],
-                        dim_out=channels[layer_input_channels],
+                        dim=layer_input_channels + layer_input_channels,
+                        dim_out=layer_input_channels,
                         time_emb_dim=time_emb_dim,
                         dropout=dropout,
                     ),
                     attention_block1,
                     ResnetBlock(
-                        dim=channels[layer_input_channels]
-                        + channels[layer_input_channels],
-                        dim_out=channels[layer_input_channels],
+                        dim=layer_input_channels + layer_input_channels,
+                        dim_out=layer_input_channels,
                         time_emb_dim=time_emb_dim,
                         dropout=dropout,
                     ),
                     attention_block2,
                     ResnetBlock(
-                        dim=channels[layer_input_channels]
-                        + channels[layer_output_channels],
-                        dim_out=channels[layer_output_channels],
+                        dim=layer_input_channels + layer_output_channels,
+                        dim_out=layer_output_channels,
                         time_emb_dim=time_emb_dim,
                         dropout=dropout,
                     ),
@@ -264,7 +262,9 @@ class ConditionalMNistUNet(torch.nn.Module):
                 ]
             )
             up_layers.append(layer)
-            layer_resolution = layer_resolution * 2
+
+            if layer_idx > 0:
+                layer_resolution = layer_resolution * 2
         self.ups = torch.nn.ModuleList(up_layers)
 
         # Final projection
