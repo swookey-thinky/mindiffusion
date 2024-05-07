@@ -45,3 +45,11 @@ def cycle(dataloader: DataLoader):
     while True:
         for data in dataloader:
             yield data
+
+
+def freeze(model: torch.nn.Module):
+    """Freeze the parameters of a model."""
+    model = model.eval()
+    for param in model.parameters():
+        param.requires_grad = False
+    return model
