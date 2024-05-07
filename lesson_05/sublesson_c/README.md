@@ -21,5 +21,23 @@ To train the model, simply run the `train_mnist.py` script under this directory 
 Output files (including sample generated images of the model in progress) are stored by timestep in the `output` directory.
 
 ## Results
+Here is the result of unconditionally sampling the model after 10k steps of training:
 
-TODO!!!
+![DDPM Unconditional](https://drive.google.com/uc?export=view&id=1lwwpHzfurPKcReGX5XU9IrcLBO-fkej8)
+
+And here is the result of conditionally sampling the model, after 10k steps of training. For conditioning,
+we used the following classes:
+<pre>
+6 2 4 3 3 1 7 2 
+1 4 4 5 7 2 1 1 
+4 6 9 0 7 7 0 1 
+5 5 1 9 7 1 8 6 
+0 5 0 8 5 6 6 8 
+5 4 2 4 4 2 2 2 
+5 5 0 9 1 5 1 1 
+8 9 4 2 3 1 0 9   
+</pre>
+
+![DDPM Conditional](https://drive.google.com/uc?export=view&id=1zfD2Z45-pIehFIMzJRqX9fntnJ80NbML)
+
+As you can see, the model has successfully learned how to generate instances of the requested classes.
