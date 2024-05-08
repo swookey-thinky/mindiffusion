@@ -26,7 +26,7 @@ Here are the unconditional samples generated using only 50 steps:
 
 ![DDIM Unconditional](https://drive.google.com/uc?export=view&id=1SSVGEOvO9Pmz-SdWLFFTVduzwF8gAR8_)
 
-Here are the prompts, and the samples generated, to demonstrated conditional sampling in only 50 steps:
+Here are the prompts, and the samples generated, to demonstrate conditional sampling in only 50 steps:
 
 <pre>
 one 7 5 6 7 7 seven 5 
