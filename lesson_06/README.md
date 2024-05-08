@@ -2,6 +2,8 @@
 
 In this lesson, we are going to look into an improvement to [Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239) called [Denoising Diffusion Implicit Model](https://arxiv.org/abs/2010.02502). This paper is fascinating in that it dramatically speeds up the sampling process of DDPM, from 1000 timesteps down to only 50 timesteps for equivalent quality. Importantly, it also provides for deterministic sampling, such that starting with the same latents will always return the same results, which is not the case for DDPM.
 
+You can find the original source code from the authors [here](https://github.com/ermongroup/ddim).
+
 In this repository, we will be working with the [MNIST](https://en.wikipedia.org/wiki/MNIST_database) dataset because it is simple and can be trained in real time with minimal GPU power and memory. The main difference between MNIST and other datasets is the single channel of the imagery, versus 3 channels in most other datasets. We will make sure that the models we build can easily accomodate 1- or 3-channel data, so that you can test the models we build on other datasets.
 
 ## Setting Up Your Environment
