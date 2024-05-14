@@ -1,0 +1,72 @@
+# Configuration for DDPM++ from Score-SDE.
+model:
+  # Beginning of the noise (variance) scale
+  sigma_min: 0.01
+  beta_min: 0.1
+  # Ending of the noise (variance) scale
+  sigma_max: 50
+  beta_max: 20.
+  # The number of noise scales
+  num_scales: 1000
+  # Scale the output by sigma (NCSNv2 style)
+  scale_by_sigma: False
+  # Nonlinearity to use in all blocks
+  nonlinearity: 'swish'
+  # The number of features/channels it the start of
+  # the network.
+  num_features: 128
+  # Resnet block channel multipliers.
+  channel_multipliers: [1, 2, 2, 2]
+  # The number of resnet blocks per resolution.
+  num_resnet_blocks: 4
+  # The resolution to apply attention layers.
+  attn_resolutions: [16]
+  # Perform resampling using convolutions
+  resamp_with_conv: True
+  # Use FIR resampling
+  fir: False
+  # Kernels to use with FIR
+  fir_kernel: [1, 3, 3, 1]
+  # True to rescale all skip connections by 1/sqrt(2)
+  skip_rescale: True
+  # Scale for initializers.
+  init_scale: 0.
+  # Type of ResNet block to use.
+  resnet_block_type: biggan
+  # Progressive growing architecture for output.
+  progressive_output: 'none'
+  # Progressive growning architecture for input.
+  progressive_input:  'none'
+  # How the combine the progressive growing layers,
+  progressive_combine: 'sum'
+  # The type of timestep embedding to use.
+  embedding_type: 'positional'
+  # The scale to use if fourier embeddings
+  fourier_scale: 16
+  # Dropout scale
+  dropout: 0.1
+
+data:
+  # Spatial width/height of the data. For MNIST, we resize
+  # to 32 to make the math easier.
+  image_size: 32
+  # Number of channels in the input data
+  num_channels: 1
+
+sampling:
+  # The number of corrector steps to use for each predictor step.
+  n_steps_each: 1
+  # True to sample with probability flow. Not supported for VPSDE's
+  probability_flow: False
+  # SNR to use with probability flow
+  snr: 0.16
+
+training:
+  # True for continuous timesteps, False for discrete.
+  continuous: False
+  # True to use the batch mean of the loss
+  reduce_mean: True
+  # If `True`, weight the mixture of score matching losses
+  # according to https://arxiv.org/abs/2101.09258; otherwise use the
+  # weighting recommended in Score-SDE paper.
+  likelihood_weighting: False

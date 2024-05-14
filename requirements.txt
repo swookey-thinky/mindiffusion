@@ -6,3 +6,4 @@ torchinfo==1.8.0
 torchvision==0.16.0
 tqdm==4.66.2
 transformers==4.40.2
+ninja==1.11.1.1
