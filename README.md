@@ -42,7 +42,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 5d |  |  | Adding Control - Extended Class Conditioning | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_05/sublesson_d)
 5e |  |  | Adding Control - Text-to-Image | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_05/sublesson_e)
 6 | October 2020 | DDIM | [Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_06)
-7 | November 2020 | Score SDE | [Score-Based Generative Modeling through Stochastic Differential Equations](https://arxiv.org/abs/2011.13456) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_05)
+7 | November 2020 | Score SDE | [Score-Based Generative Modeling through Stochastic Differential Equations](https://arxiv.org/abs/2011.13456) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_07)
 8 | February 2021 | DaLL-E | [Zero-Shot Text-to-Image Generation](https://arxiv.org/abs/2102.12092) | | |
 9 | February 2021 | IDDPM | [Improved Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2102.09672) | | |
 10 | May 2021 | Guided Diffusion | [Diffusion Models Beat GANs on Image Synthesis](https://arxiv.org/abs/2105.05233) | | |
