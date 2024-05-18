@@ -1,0 +1,43 @@
+# Configuration for MNIST sized DaLL-E.
+model:
+    # The number of text tokens in a sequence. DaLL-E used 256.
+    num_text_tokens_in_sequence: 256
+    # The vocabulary size of the text tokenizer. DaLL-E used
+    # a BPE tokenizer with a vocabulary size of 16384.
+    text_vocab_size: 10000
+    # The number of image tokens per spatial dimension,
+    # from the discrete VAE. DaLL-E used 32.
+    num_image_tokens_per_dim: 8
+    # The number of transformer layers to use. DaLL-E usd 64.
+    num_layers: 6
+    # The hidden size of the transformer layers. DaLL-E used 3968
+    # (num_attention_heads * 64)
+    hidden_size: 128
+    # The number of attention heads to use for attention layer. DaLL-E used 62.
+    num_attention_heads: 64
+
+    # Configuration of the VAE
+    vae:
+      # The vocabulary size of the image tokens. DaLL-E used 8192.
+      vocab_size: 8192
+      # The number of groups in the VAE. DaLL-E used 4
+      num_groups: 3
+      # Number of input channels
+      input_channels: 1
+      # Hidden size of the encoder/decoder blocks.
+      hidden_size:  256
+      # The number of encoder/decoder blocks, per group.
+      num_blocks_per_group: 2
+
+data:
+  # Spatial width/height of the data. For MNIST, we resize
+  # to 32 to make the math easier.
+  image_size: 32
+  # Number of channels in the input data
+  num_channels: 1
+
+sampling:
+  # Number of samples to generate.
+  num_samples: 64
+  # Batch size to use when sampling.
+  sample_batch_size: 8
