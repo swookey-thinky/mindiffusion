@@ -3,6 +3,12 @@
 Implements the DaLL-E transformer model from "Zero-Shot Text-to-Image Generation"
 (https://arxiv.org/abs/2102.12092). DaLL-E is a transformer model which predicts
 image tokens given a sequence of text tokens.
+
+Implementation inspired by:
+
+https://github.com/lucidrains/DALLE-pytorch/blob/main/dalle_pytorch/dalle_pytorch.py
+and
+https://github.com/ai-forever/ru-dalle/blob/master/rudalle/dalle/model.py
 """
 
 from einops import rearrange

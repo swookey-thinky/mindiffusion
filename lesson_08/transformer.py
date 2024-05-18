@@ -1,10 +1,7 @@
 """Transformer blocks used in DaLL-E.
 
-Implementation inspired by:
-
-https://github.com/lucidrains/DALLE-pytorch/blob/main/dalle_pytorch/dalle_pytorch.py
-and
-https://github.com/ai-forever/ru-dalle/blob/master/rudalle/dalle/model.py
+Implementation based on:
+https://github.com/ai-forever/ru-dalle/blob/master/rudalle/dalle/transformer.py
 """
 
 import torch
