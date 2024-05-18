@@ -2,6 +2,8 @@
 
 Implementation based on:
 https://github.com/ai-forever/ru-dalle/blob/master/rudalle/dalle/transformer.py
+and
+https://github.com/openai/blocksparse/blob/master/examples/transformer/enwik8.py
 """
 
 import torch
