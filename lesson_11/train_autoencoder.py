@@ -4,7 +4,7 @@ This is a simple VAE to help reduce the dimensionality of the MNIST
 dataset from 1x32x32 to 1x8x8.
 """
 
-from accelerate import Accelerator
+from accelerate import Accelerator, DataLoaderConfiguration
 import argparse
 from einops import rearrange
 import math
@@ -61,7 +61,9 @@ def run_lesson_11_autoencoder(num_training_steps: int, batch_size: int):
     )
 
     # The accelerate library will handle of the GPU device management for us.
-    accelerator = Accelerator(split_batches=False, mixed_precision="no")
+    accelerator = Accelerator(
+        DataLoaderConfiguration(split_batches=False), mixed_precision="no"
+    )
     device = accelerator.device
 
     # Prepare the dataset with the accelerator. This makes sure all of the
