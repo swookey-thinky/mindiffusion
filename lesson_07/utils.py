@@ -3,6 +3,7 @@
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+from typing import Any
 import yaml
 
 
@@ -10,7 +11,7 @@ class DotConfig:
     def __init__(self, cfg):
         self._cfg = cfg
 
-    def __getattr__(self, k):
+    def __getattr__(self, k) -> Any:
         v = self._cfg[k]
         if isinstance(v, dict):
             return DotConfig(v)
@@ -18,6 +19,7 @@ class DotConfig:
 
 
 def load_yaml(yaml_path: str) -> DotConfig:
+    """Loads a YAML configuration file."""
     with open(yaml_path, "r") as fp:
         return DotConfig(yaml.load(fp, yaml.CLoader))
 
