@@ -73,6 +73,10 @@ class MNistUnet(torch.nn.Module):
             bias=False,
         )
 
+        attention_ds = []
+        for res in config.model.attention_resolutions:
+            attention_ds.append(config.data.image_size // int(res))
+
         # Setup the downsampling, middle, and upsampling pyramids
         # according to the configuration parameters.
         input_block_chans = [num_features]
@@ -91,7 +95,7 @@ class MNistUnet(torch.nn.Module):
                     )
                 ]
                 ch = mult * num_features
-                if ds in config.model.attention_resolutions:
+                if ds in attention_ds:
                     layers.append(
                         MultiHeadSelfAttention(
                             ch, num_heads=config.model.num_attention_heads_downsample
@@ -142,7 +146,7 @@ class MNistUnet(torch.nn.Module):
                     )
                 ]
                 ch = num_features * mult
-                if ds in config.model.attention_resolutions:
+                if ds in attention_ds:
                     layers.append(
                         MultiHeadSelfAttention(
                             channels=ch,

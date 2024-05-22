@@ -100,6 +100,8 @@ def run_lesson_09(num_training_steps: int, batch_size: int, config_path: str):
     # Not mentioned in the DDPM paper, but the original implementation
     # used gradient clipping during training.
     max_grad_norm = 1.0
+    average_loss = 0.0
+    average_loss_cumulative = 0.0
 
     with tqdm(initial=step, total=num_training_steps) as progress_bar:
         # Perform gradient descent for the given number of training steps.
@@ -127,13 +129,18 @@ def run_lesson_09(num_training_steps: int, batch_size: int, config_path: str):
             optimizer.zero_grad()
 
             # Show the current loss in the progress bar.
-            progress_bar.set_description(f"loss: {loss.item():.4f}")
+            progress_bar.set_description(
+                f"loss: {loss.item():.4f} avg_loss: {average_loss:.4f}"
+            )
+            average_loss_cumulative += loss.item()
 
             # To help visualize training, periodically sample from the
             # diffusion model to see how well its doing.
             if step % save_and_sample_every_n == 0:
                 sample(diffusion_model, step)
                 save(diffusion_model, step, loss, optimizer)
+                average_loss = average_loss_cumulative / float(save_and_sample_every_n)
+                average_loss_cumulative = 0.0
 
             # Update the current step.
             step += 1

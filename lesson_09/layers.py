@@ -257,7 +257,7 @@ class Downsample(torch.nn.Module):
         if use_conv:
             self.op = conv_nd(dims, channels, channels, 3, stride=stride, padding=1)
         else:
-            self.op = avg_pool_nd(stride)
+            self.op = avg_pool_nd(dims, kernel_size=stride, stride=stride)
 
     def forward(self, x):
         assert x.shape[1] == self.channels

@@ -1,4 +1,4 @@
-# Configuration for DDPM++ from Score-SDE.
+# Configuration for v-parameterized Improved DDPM
 model:
   # The number of noise scales
   num_scales: 1000
