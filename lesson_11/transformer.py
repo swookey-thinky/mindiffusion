@@ -9,6 +9,7 @@ from einops import rearrange
 import torch
 
 from attention import CrossAttention
+from layers import ConditioningBlock
 
 
 def zero_module(module):
@@ -90,7 +91,7 @@ class BasicTransformerBlock(torch.nn.Module):
         return x
 
 
-class SpatialTransformer(torch.nn.Module):
+class SpatialTransformer(ConditioningBlock):
     """
     Transformer block for image-like data. First, project the input (aka embedding)
     and reshape to b, t, d. Then apply standard transformer action.

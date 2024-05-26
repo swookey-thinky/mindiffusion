@@ -11,17 +11,19 @@ from torchvision import transforms, utils
 from torchvision.datasets import MNIST
 from tqdm import tqdm
 
-from utils import cycle, freeze
+from utils import cycle, freeze, get_obj_from_str, load_yaml, DotConfig
 from text_encoder import FrozenCLIPEmbedder
-from ldm import GaussianDiffusion_LDM
-from score_network import ConditionalMNistUNet
-from autoencoder import MNISTAutoEncoderKL
+from ldm import GaussianDiffusion_LatentDiffusion
+from score_network import MNistUnet
 
 OUTPUT_NAME = "output"
 
 
 def run_lesson_11(
-    num_training_steps: int, batch_size: int, autoencoder_checkpoint: str
+    num_training_steps: int,
+    batch_size: int,
+    autoencoder_checkpoint: str,
+    config_path: str,
 ):
     # Ensure the output directories exist
     os.makedirs(OUTPUT_NAME, exist_ok=True)
@@ -48,33 +50,17 @@ def run_lesson_11(
     # Create the dataloader for the MNIST dataset
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
+    # Open the model configuration
+    config = load_yaml(config_path)
+
     # Context dimension - the dimension of the context conditioning that
     # is passed to the model. During runtime, we project the embedding dimension
     # to the context dimension before passing to the model.
-    context_dimension = 768
-    model_dimension = 128
     text_encoder_max_length = 77
-    latent_dimension = 8
-    latent_channels = 1
-
-    # Because we are working in latent space, we can use a smaller model.
-    # The resolution of the model starts at 1x8x8, and we have fewer down/up layers
-    # because of the reduced resolution.
-    unet_with_crossattention_type = partial(
-        ConditionalMNistUNet,
-        context_dimension=context_dimension,
-        model_initial_channels=model_dimension,
-        model_channel_multipliers=[1, 2, 2],
-        spatial_width=8,
-        attention_resolutions=[4],
-        dropout=0.1,
-    )
 
     # Create and load the VAE
-    vae = MNISTAutoEncoderKL()
-
-    # Load the model checkpoint
-    checkpoint = torch.load(autoencoder_checkpoint)
+    vae = get_obj_from_str(config.model.vae.target)(config.model.vae.params)
+    checkpoint = torch.load(autoencoder_checkpoint, map_location="cpu")
     vae.load_state_dict(checkpoint["model_state_dict"])
 
     # Freeze the VAE so that we are not updating its weights.
@@ -82,19 +68,28 @@ def run_lesson_11(
 
     # Create the diffusion model we are going to train, with a UNet
     # specifically for the MNIST dataset.
-    diffusion_model = GaussianDiffusion_LDM(
-        unet_type=unet_with_crossattention_type, vae=vae
+    diffusion_model = GaussianDiffusion_LatentDiffusion(
+        score_network_type=MNistUnet, config=config, vae=vae
     )
-
     # The text encoder generates embeddings of size (B, text_encoder_max_length, context_dimension)
     summary(
-        diffusion_model._unet,
-        [(128, 1, 32, 32), (128,), (128, text_encoder_max_length, context_dimension)],
+        diffusion_model._score_network,
+        [
+            (
+                128,
+                config.model.latent_channels,
+                config.model.latent_size,
+                config.model.latent_size,
+            ),
+            (128,),
+            (128, text_encoder_max_length, config.model.context_size),
+        ],
     )
 
     # The accelerate library will handle of the GPU device management for us.
     accelerator = Accelerator(
-        DataLoaderConfiguration(split_batches=False), mixed_precision="no"
+        dataloader_config=DataLoaderConfiguration(split_batches=False),
+        mixed_precision="no",
     )
     device = accelerator.device
 
@@ -125,6 +120,8 @@ def run_lesson_11(
     # Not mentioned in the DDPM paper, but the original implementation
     # used gradient clipping during training.
     max_grad_norm = 1.0
+    average_loss = 0.0
+    average_loss_cumulative = 0.0
 
     text_encoder = FrozenCLIPEmbedder(max_length=text_encoder_max_length).to(device)
     with tqdm(initial=step, total=num_training_steps) as progress_bar:
@@ -138,7 +135,8 @@ def run_lesson_11(
             context = convert_labels_to_embeddings(labels, text_encoder)
 
             # Calculate the loss on the batch of training data.
-            loss = diffusion_model.algorithm1_train_on_batch(images, context)
+            loss_dict = diffusion_model.loss_on_batch(images, context)
+            loss = loss_dict["loss"]
 
             # Calculate the gradients at each step in the network.
             accelerator.backward(loss)
@@ -157,91 +155,136 @@ def run_lesson_11(
             optimizer.zero_grad()
 
             # Show the current loss in the progress bar.
-            progress_bar.set_description(f"loss: {loss.item():.4f}")
+            progress_bar.set_description(
+                f"loss: {loss.item():.4f} avg_loss: {average_loss:.4f}"
+            )
+            average_loss_cumulative += loss.item()
+
+            # To help visualize training, periodically sample from the
+            # diffusion model to see how well its doing.
+            if step % save_and_sample_every_n == 0:
+                sample(
+                    diffusion_model=diffusion_model,
+                    text_encoder=text_encoder,
+                    step=step,
+                    config=config,
+                    conditional=False,
+                )
+                sample(
+                    diffusion_model=diffusion_model,
+                    text_encoder=text_encoder,
+                    step=step,
+                    config=config,
+                    conditional=True,
+                )
+                save(diffusion_model, step, loss, optimizer)
+                average_loss = average_loss_cumulative / float(save_and_sample_every_n)
+                average_loss_cumulative = 0.0
 
             # Update the current step.
             step += 1
 
-            # To help visualize training, periodically sample from the
-            # diffusion model to see how well its doing.
-            if step != 0 and step % save_and_sample_every_n == 0:
-                diffusion_model.eval()
-                num_samples = 64
-                with torch.inference_mode():
-                    # Sample from the model to check the quality for
-                    # unconditional sampling. Note that we are sampling
-                    # from the latent dimension!
-                    samples = diffusion_model.algorithm2_sampling(
-                        image_size=images.shape[2],
-                        latent_dim=latent_dimension,
-                        num_channels=latent_channels,
-                        batch_size=num_samples,
-                        context=torch.zeros(
-                            (num_samples, context_dimension),
-                            dtype=torch.float32,
-                            device=device,
-                        ),
-                    )
-
-                # Ssve the unconditional samples into an image grid
-                utils.save_image(
-                    samples,
-                    str(f"{OUTPUT_NAME}/sample-{step}.png"),
-                    nrow=int(math.sqrt(num_samples)),
-                )
-
-                # Generate a batch of conditional samples
-                labels = torch.randint(
-                    low=0, high=10, size=(num_samples,), device=device
-                )
-                conditional_embeddings, prompts = convert_labels_to_embeddings(
-                    labels,
-                    text_encoder,
-                    return_prompts=True,
-                )
-                conditional_embeddings = conditional_embeddings.to(device)
-
-                with torch.inference_mode():
-                    # Sample from the model to check the quality. Again, we are
-                    # sampling in the latent dimension!
-                    conditional_samples = diffusion_model.algorithm2_sampling(
-                        image_size=images.shape[2],
-                        latent_dim=latent_dimension,
-                        num_channels=latent_channels,
-                        batch_size=num_samples,
-                        context=conditional_embeddings,
-                    )
-                utils.save_image(
-                    conditional_samples,
-                    str(f"{OUTPUT_NAME}/conditional_sample-{step}.png"),
-                    nrow=int(math.sqrt(num_samples)),
-                )
-                with open(f"{OUTPUT_NAME}/conditional_sample-{step}.txt", "w") as fp:
-                    for i in range(num_samples):
-                        if i != 0 and (i % math.sqrt(num_samples)) == 0:
-                            fp.write("\n")
-                        fp.write(f"{labels[i]} ")
-                with open(
-                    f"{OUTPUT_NAME}/conditional_sample_prompts-{step}.txt", "w"
-                ) as fp:
-                    for i in range(num_samples):
-                        if i != 0 and (i % math.sqrt(num_samples)) == 0:
-                            fp.write("\n")
-                        fp.write(f"{prompts[i]} ")
-
-                # Save a corresponding model checkpoint.
-                torch.save(
-                    {
-                        "step": step,
-                        "model_state_dict": diffusion_model.state_dict(),
-                        "optimizer_state_dict": optimizer.state_dict(),
-                        "loss": loss,
-                    },
-                    f"{OUTPUT_NAME}/gaussian_diffusion_ddpm-{step}.pt",
-                )
-
             # Update the training progress bar in the console.
             progress_bar.update(1)
+
+    # Save and sample the final step.
+    sample(
+        diffusion_model=diffusion_model,
+        text_encoder=text_encoder,
+        step=step,
+        config=config,
+        conditional=False,
+    )
+    sample(
+        diffusion_model=diffusion_model,
+        text_encoder=text_encoder,
+        step=step,
+        config=config,
+        conditional=True,
+    )
+    save(diffusion_model, step, loss, optimizer)
+
+
+def sample(
+    diffusion_model: GaussianDiffusion_LatentDiffusion,
+    text_encoder,
+    step,
+    config: DotConfig,
+    conditional: bool = False,
+):
+    num_samples = 64
+    device = next(diffusion_model.parameters()).device
+
+    if conditional:
+        labels = torch.randint(low=0, high=10, size=(num_samples,), device=device)
+        conditional_embeddings, prompts = convert_labels_to_embeddings(
+            labels,
+            text_encoder,
+            return_prompts=True,
+        )
+        context = conditional_embeddings.to(device)
+    else:
+        context = torch.zeros(
+            (num_samples, config.model.context_size),
+            dtype=torch.float32,
+            device=device,
+        )
+        labels = None
+        prompts = None
+    # Sample from the model to check the quality
+    output = diffusion_model.sample(
+        num_samples=num_samples,
+        context=context,
+    )
+
+    if diffusion_model._is_class_conditional:
+        samples, labels = output
+    else:
+        samples = output
+        labels = None
+
+    # Save the samples into an image grid
+    utils.save_image(
+        samples,
+        str(
+            f"{OUTPUT_NAME}/{'conditional' if conditional else 'unconditional'}_sample-{step}.png"
+        ),
+        nrow=int(math.sqrt(num_samples)),
+    )
+
+    # Save the labels if we have them
+    if labels is not None:
+        with open(
+            f"{OUTPUT_NAME}/{'conditional' if conditional else 'unconditional'}_sample-{step}.txt",
+            "w",
+        ) as fp:
+            for i in range(num_samples):
+                if i != 0 and (i % math.sqrt(num_samples)) == 0:
+                    fp.write("\n")
+                fp.write(f"{labels[i]} ")
+
+    if prompts is not None:
+        with open(
+            f"{OUTPUT_NAME}/{'conditional' if conditional else 'unconditional'}_sample-{step}_prompts.txt",
+            "w",
+        ) as fp:
+            for i in range(num_samples):
+                if i != 0 and (i % math.sqrt(num_samples)) == 0:
+                    fp.write("\n")
+                fp.write(f"{prompts[i]} ")
+
+
+def save(diffusion_model, step, loss, optimizer):
+    # Save a corresponding model checkpoint.
+    torch.save(
+        {
+            "step": step,
+            "model_state_dict": diffusion_model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "loss": loss,
+        },
+        f"{OUTPUT_NAME}/latent_diffusion-{step}.pt",
+    )
 
 
 def convert_labels_to_embeddings(
@@ -291,6 +334,7 @@ def main(override=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_training_steps", type=int, default=10000)
     parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--config_path", type=str, default="configs/mnist_ldm.yaml")
     parser.add_argument("--autoencoder_checkpoint", type=str, required=True)
 
     args = parser.parse_args()
@@ -298,6 +342,7 @@ def main(override=None):
     run_lesson_11(
         num_training_steps=args.num_training_steps,
         batch_size=args.batch_size,
+        config_path=args.config_path,
         autoencoder_checkpoint=args.autoencoder_checkpoint,
     )
 

@@ -1,0 +1,70 @@
+# Configuration for Latent Diffusion Model.
+model:
+  # The number of noise scales
+  num_scales: 1000
+  # The number of features/channels at the start of
+  # the network.
+  num_features: 128
+  # Resnet block channel multipliers.
+  channel_multipliers: [1, 2, 2]
+  # The number of resnet blocks per resolution.
+  num_resnet_blocks: 2
+  # The resolution to apply attention layers.
+  attention_resolutions: [4]
+  # The number of attention heads to use
+  num_attention_heads_downsample: 4
+  num_attention_heads_upsample: 4
+  # Use scale/shift of the GroupNorm in the timestep embedding.
+  # This is called Adaptive Group Normalization in the paper.
+  use_scale_shift_norm: True
+  # Perform resampling using convolutions.
+  resamp_with_conv: False
+  # BigGAN style resnet block to perform up/down sampling.
+  resblock_updown: False
+  # The type of resnet block to use
+  resnet_block_type: 'ddpm'
+  # Dropout scale
+  dropout: 0.1
+  # Is this a v or epsilon-param model?
+  is_v_param: False
+  # True if this is a class conditional model
+  is_class_conditional: False
+  # The size of the latent dimension
+  latent_size: 8
+  # The number of channels in the latent
+  latent_channels: 1
+  # The size of the context dimension, for context conditioning
+  # signals.
+  context_size: 768
+  # The number of heads in the attention layers
+  attention_heads: 1
+  # The number of channels in the attention layers
+  attention_channels: 64
+  # Configuration of the VAE used in the model
+  vae:
+    target: autoencoders.simple.MNISTAutoEncoderKL
+    params:
+      # The resolution of the input data
+      input_resolution: 32
+      # The number of channels in the input
+      input_channels: 1
+      # The number of channels in the latent dimension
+      latent_channels: 1
+      # The size of the latent layer
+      latent_size: 8
+      # The number of hidden layers in the encoder/decoder networks
+      channel_multipliers: [1.0, 0.5, 0.25]
+      # The number of features in the hidden dimensions
+      num_features: 1024
+      # Dropout ratio for training
+      dropout: 0.1
+
+
+data:
+  # Spatial width/height of the data. For MNIST, we resize
+  # to 32 to make the math easier.
+  image_size: 32
+  # Number of channels in the input data
+  num_channels: 1
+  # The number of classes in the dataset
+  num_classes: 10

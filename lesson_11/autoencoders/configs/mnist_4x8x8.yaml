@@ -1,0 +1,22 @@
+# Configuration for an autoencoder with a latent space of 4x8x8,
+# for mnist data.
+embed_dim: 4
+loss_config:
+  target: autoencoders.losses.LPIPSWithDiscriminator
+  params:
+    disc_start: 7500
+    kl_weight: 1.0
+    disc_weight: 0.5
+    disc_in_channels: 1
+
+encoder_decoder_config:
+  double_z: True
+  z_channels: 4
+  resolution: 32
+  in_channels: 1
+  out_ch: 1
+  ch: 128
+  ch_mult: [1,1,2]  # num_down = len(ch_mult)-1
+  num_res_blocks: 2
+  attn_resolutions: [16,8]
+  dropout: 0.0

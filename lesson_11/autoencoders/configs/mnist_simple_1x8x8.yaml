@@ -1,0 +1,14 @@
+# The resolution of the input data
+input_resolution: 32
+# The number of channels in the input
+input_channels: 1
+# The number of channels in the latent dimension
+latent_channels: 1
+# The size of the latent layer
+latent_size: 8
+# The number of hidden layers in the encoder/decoder networks
+channel_multipliers: [1.0, 0.5, 0.25]
+# The number of features in the hidden dimensions
+num_features: 1024
+# Dropout ratio for training
+dropout: 0.1

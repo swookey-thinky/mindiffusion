@@ -13,267 +13,219 @@ latent dimensionality
 """
 
 import torch
+from typing import Any, List, Optional, Union
 
-from layers import Identity, SinusoidalPositionEmbedding, ResnetBlock
+from layers import (
+    Downsample,
+    SinusoidalPositionEmbedding,
+    ResnetBlockDDPM,
+    ResnetBlockBigGAN,
+    TimestepAndConditioningEmbedSequential,
+    Upsample,
+)
 from transformer import SpatialTransformer
-from typing import Sequence
+from utils import DotConfig
 
 
-class ConditionalMNistUNet(torch.nn.Module):
+class MNistUnet(torch.nn.Module):
     """A time-dependent score-based model built upon U-Net architecture.
 
-    This model adds a transformer block, with cross attention, to project the
-    context embeddings into the network. This is the same conditioning architecture
-    as used in High-Resolution Image Synthesis with Latent Diffusion Models
-    (https://arxiv.org/abs/2112.10752).
+    When built as an epsilon-param model, the model only outputs epsilon, the
+    re-parameterized estimate of the mean reverse process. When built as a v-param
+    network, the model outputs both epsilon and v, a re-parameterized estimate of the
+    variance of the reverse process model.
     """
 
     def __init__(
         self,
-        context_dimension: int = 64,
-        dropout: float = 0.0,
-        model_initial_channels: int = 128,
-        model_channel_multipliers: Sequence[int] = [1, 2, 2, 2],
-        spatial_width: int = 32,
-        attention_resolutions: Sequence[int] = [16],
+        config: DotConfig,
     ):
-        """Initialize a new instance of ConditionalMNistUNetWith.
-
-        Original paper had channel multipliers of [1,2,2,2] and model_initial_channels = 128
+        """Initializes a new instance of MNistUnet.
 
         Args:
-            content_dimension: The number of dimensions for the context embedding.
-            dropout: Dropout rate, from [0,1].
-            model_initial_channels:
+            config: Model configuration parameters.
         """
         super().__init__()
 
-        input_channels = model_initial_channels
-        channel_mults = model_channel_multipliers
-        channels = list(map(lambda x: input_channels * x, channel_mults))
+        input_channels = config.model.latent_channels
+        num_features = config.model.num_features
+        channel_multipliers = config.model.channel_multipliers
+        is_v_param = config.model.is_v_param
+        dropout = config.model.dropout
+
+        self._is_class_conditional = config.model.is_class_conditional
+        self._num_classes = config.data.num_classes
+        self._is_v_param = is_v_param
+
+        # Original paper had channel multipliers of [1,2,2,2] and input_channels = 128
+        channels = list(map(lambda x: num_features * x, channel_multipliers))
+        self._output_channels = input_channels
+        if is_v_param:
+            self._output_channels = input_channels * 2
 
         # The time embedding dimension was 4*input_channels
-        time_emb_dim = input_channels * 4
+        time_emb_dim = num_features * 4
 
         # Timestep embedding projection
         self.time_proj = torch.nn.Sequential(
-            SinusoidalPositionEmbedding(input_channels),
-            torch.nn.Linear(input_channels, time_emb_dim),
+            SinusoidalPositionEmbedding(num_features),
+            torch.nn.Linear(num_features, time_emb_dim),
             torch.nn.SiLU(),
             torch.nn.Linear(time_emb_dim, time_emb_dim),
         )
 
+        if self._is_class_conditional:
+            self.label_proj = torch.nn.Embedding(self._num_classes, time_emb_dim)
+
         # Original paper implementation had kernel size = 3, stride = 1
         self.initial_convolution = torch.nn.Conv2d(
-            in_channels=1,
-            out_channels=input_channels,
+            in_channels=input_channels,
+            out_channels=channels[0],
             kernel_size=3,
             stride=1,
             padding=1,
             bias=False,
         )
 
-        # The down/up sampling layers have 4 feature map resolutions for 32x32 input.
-        # Note that we are padding the MNist dataset to 32x32 from 28x28 to make the math
-        # works out easier. All resolution levels have two convolutional residual blocks,
-        # and self-attention layers at the 16 level between the convolutions.
-        number_of_layers = len(channels)
-
-        layer_resolution = spatial_width
-        down_layers = []
-        for layer_idx in range(number_of_layers):
-
-            layer_input_channels = (
-                channels[layer_idx-1] if layer_idx != 0 else input_channels
-            )
-            layer_output_channels = channels[layer_idx]
-
-            attention_block1 = (
-                Identity()
-                if layer_resolution not in attention_resolutions
-                else SpatialTransformer(
-                    in_channels=layer_output_channels,
-                    n_heads=1,
-                    d_head=64,
-                    context_dim=context_dimension,
-                    dropout=dropout,
-                )
-            )
-
-            attention_block2 = (
-                Identity()
-                if layer_resolution not in attention_resolutions
-                else SpatialTransformer(
-                    in_channels=layer_output_channels,
-                    n_heads=1,
-                    d_head=64,
-                    context_dim=context_dimension,
-                    dropout=dropout,
-                )
-            )
-
-            final_conv = (
-                torch.nn.Conv2d(
-                    layer_output_channels,
-                    layer_output_channels,
-                    3,
-                    padding=1,
-                    stride=2,
-                )
-                if layer_idx < (number_of_layers - 1)
-                else Identity()
-            )
-
-            layer = torch.nn.ModuleList(
-                [
-                    ResnetBlock(
-                        dim=layer_input_channels,
-                        dim_out=layer_output_channels,
-                        time_emb_dim=time_emb_dim,
-                        dropout=dropout,
-                    ),
-                    attention_block1,
-                    ResnetBlock(
-                        dim=layer_output_channels,
-                        dim_out=layer_output_channels,
-                        time_emb_dim=time_emb_dim,
-                        dropout=dropout,
-                    ),
-                    attention_block2,
-                    final_conv,
-                ]
-            )
-            down_layers.append(layer)
-            if layer_idx < (number_of_layers - 1):
-                layer_resolution = layer_resolution // 2
-        self.downs = torch.nn.ModuleList(down_layers)
-
-        # Middle layers
-        self.middle = torch.nn.ModuleList(
-            [
-                # Input (B, 256, 4, 4), Output (B, 256, 4, 4)
-                ResnetBlock(
-                    dim=channels[-1],
-                    dim_out=channels[-1],
-                    time_emb_dim=time_emb_dim,
-                    dropout=dropout,
-                ),
-                SpatialTransformer(
-                    in_channels=channels[-1],
-                    n_heads=1,
-                    d_head=64,
-                    context_dim=context_dimension,
-                    dropout=dropout,
-                ),
-                # Input (B, 256, 4, 4), Output (B, 256, 4, 4)
-                ResnetBlock(
-                    dim=channels[-1],
-                    dim_out=channels[-1],
-                    time_emb_dim=time_emb_dim,
-                    dropout=dropout,
-                ),
-            ]
+        ResnetBlock = (
+            ResnetBlockBigGAN
+            if config.model.resnet_block_type == "biggan"
+            else ResnetBlockDDPM
         )
 
-        # The upsampling layers reverse the process from the downsampling
-        # layers.
-        up_layers = []
-        for layer_idx in reversed(range(number_of_layers)):
+        attention_ds = []
+        for res in config.model.attention_resolutions:
+            attention_ds.append(config.model.latent_size // int(res))
 
-            layer_input_channels = channels[layer_idx]
-            layer_output_channels = (
-                channels[layer_idx - 1] if layer_idx != 0 else input_channels
-            )
-
-            attention_block1 = (
-                Identity()
-                if layer_resolution not in attention_resolutions
-                else SpatialTransformer(
-                    in_channels=layer_input_channels,
-                    n_heads=1,
-                    d_head=64,
-                    context_dim=context_dimension,
-                    dropout=dropout,
-                )
-            )
-
-            attention_block2 = (
-                Identity()
-                if layer_resolution not in attention_resolutions
-                else SpatialTransformer(
-                    in_channels=layer_input_channels,
-                    n_heads=1,
-                    d_head=64,
-                    context_dim=context_dimension,
-                    dropout=dropout,
-                )
-            )
-
-            attention_block3 = (
-                Identity()
-                if layer_resolution not in attention_resolutions
-                else SpatialTransformer(
-                    in_channels=layer_output_channels,
-                    n_heads=1,
-                    d_head=64,
-                    context_dim=context_dimension,
-                    dropout=dropout,
-                )
-            )
-
-            final_conv = (
-                torch.nn.Sequential(
-                    torch.nn.Upsample(scale_factor=2, mode="nearest"),
-                    torch.nn.Conv2d(
-                        layer_output_channels,
-                        layer_output_channels,
-                        3,
-                        padding=1,
-                    ),
-                )
-                if layer_idx > 0
-                else Identity()
-            )
-
-            layer = torch.nn.ModuleList(
-                [
+        # Setup the downsampling, middle, and upsampling pyramids
+        # according to the configuration parameters.
+        input_block_chans = [num_features]
+        ch = num_features
+        ds = 1
+        self.downs = torch.nn.ModuleList([])
+        for level, mult in enumerate(channel_multipliers):
+            for _ in range(config.model.num_resnet_blocks):
+                layers: List[Any] = [
                     ResnetBlock(
-                        dim=layer_input_channels + layer_input_channels,
-                        dim_out=layer_input_channels,
+                        dim_in=ch,
                         time_emb_dim=time_emb_dim,
                         dropout=dropout,
-                    ),
-                    attention_block1,
-                    ResnetBlock(
-                        dim=layer_input_channels + layer_input_channels,
-                        dim_out=layer_input_channels,
-                        time_emb_dim=time_emb_dim,
-                        dropout=dropout,
-                    ),
-                    attention_block2,
-                    ResnetBlock(
-                        dim=layer_input_channels + layer_output_channels,
-                        dim_out=layer_output_channels,
-                        time_emb_dim=time_emb_dim,
-                        dropout=dropout,
-                    ),
-                    attention_block3,
-                    final_conv,
+                        dim_out=mult * num_features,
+                        use_scale_shift_norm=config.model.use_scale_shift_norm,
+                        use_conv=config.model.resamp_with_conv,
+                    )
                 ]
-            )
-            up_layers.append(layer)
+                ch = mult * num_features
+                if ds in attention_ds:
+                    layers.append(
+                        SpatialTransformer(
+                            in_channels=ch,
+                            n_heads=config.model.attention_heads,
+                            d_head=config.model.attention_channels,
+                            context_dim=config.model.context_size,
+                            dropout=dropout,
+                        )
+                    )
+                self.downs.append(TimestepAndConditioningEmbedSequential(*layers))
+                input_block_chans.append(ch)
+            if level != len(channel_multipliers) - 1:
+                self.downs.append(
+                    TimestepAndConditioningEmbedSequential(
+                        ResnetBlock(
+                            dim_in=ch,
+                            time_emb_dim=time_emb_dim,
+                            dropout=dropout,
+                            dim_out=ch,
+                            use_scale_shift_norm=config.model.use_scale_shift_norm,
+                            use_conv=config.model.resamp_with_conv,
+                            down=True,
+                        )
+                        if config.model.resblock_updown
+                        else Downsample(
+                            ch,
+                            config.model.resamp_with_conv,
+                            dims=2,
+                        )
+                    )
+                )
+                input_block_chans.append(ch)
+                ds *= 2
 
-            if layer_idx > 0:
-                layer_resolution = layer_resolution * 2
-        self.ups = torch.nn.ModuleList(up_layers)
+        # Middle layers
+        self.middle = TimestepAndConditioningEmbedSequential(
+            ResnetBlock(
+                dim_in=ch,
+                dim_out=ch,
+                time_emb_dim=time_emb_dim,
+                dropout=dropout,
+                use_scale_shift_norm=config.model.use_scale_shift_norm,
+                use_conv=config.model.resamp_with_conv,
+            ),
+            SpatialTransformer(
+                in_channels=ch,
+                n_heads=config.model.attention_heads,
+                d_head=config.model.attention_channels,
+                context_dim=config.model.context_size,
+                dropout=dropout,
+            ),
+            ResnetBlock(
+                dim_in=ch,
+                dim_out=ch,
+                time_emb_dim=time_emb_dim,
+                dropout=dropout,
+                use_scale_shift_norm=config.model.use_scale_shift_norm,
+                use_conv=config.model.resamp_with_conv,
+            ),
+        )
+
+        self.ups = torch.nn.ModuleList([])
+        for level, mult in list(enumerate(channel_multipliers))[::-1]:
+            for i in range(config.model.num_resnet_blocks + 1):
+                layers = [
+                    ResnetBlock(
+                        dim_in=ch + input_block_chans.pop(),
+                        time_emb_dim=time_emb_dim,
+                        dropout=dropout,
+                        dim_out=num_features * mult,
+                        use_scale_shift_norm=config.model.use_scale_shift_norm,
+                        use_conv=config.model.resamp_with_conv,
+                    )
+                ]
+                ch = num_features * mult
+                if ds in attention_ds:
+                    layers.append(
+                        SpatialTransformer(
+                            in_channels=ch,
+                            n_heads=config.model.attention_heads,
+                            d_head=config.model.attention_channels,
+                            context_dim=config.model.context_size,
+                            dropout=dropout,
+                        )
+                    )
+                if level and i == config.model.num_resnet_blocks:
+                    layers.append(
+                        ResnetBlock(
+                            dim_in=ch,
+                            time_emb_dim=time_emb_dim,
+                            dropout=dropout,
+                            dim_out=ch,
+                            use_scale_shift_norm=config.model.use_scale_shift_norm,
+                            use_conv=config.model.resamp_with_conv,
+                            up=True,
+                        )
+                        if config.model.resblock_updown
+                        else Upsample(ch, config.model.resamp_with_conv, dims=2)
+                    )
+                    ds //= 2
+                self.ups.append(TimestepAndConditioningEmbedSequential(*layers))
 
         # Final projection
         self.final_projection = torch.nn.Sequential(
-            torch.nn.GroupNorm(num_groups=32, num_channels=input_channels),
+            torch.nn.GroupNorm(num_groups=32, num_channels=num_features),
             torch.nn.SiLU(),
             torch.nn.Conv2d(
-                in_channels=input_channels,
-                out_channels=1,
+                in_channels=num_features,
+                out_channels=self._output_channels,
                 kernel_size=3,
                 stride=1,
                 padding=1,
@@ -281,44 +233,34 @@ class ConditionalMNistUNet(torch.nn.Module):
             ),
         )
 
-    def forward(self, x, t, y=None):
+    def forward(
+        self,
+        x,
+        t,
+        context: Optional[torch.Tensor] = None,
+        y: Optional[torch.Tensor] = None,
+    ) -> Union[torch.Tensor, List[torch.Tensor]]:
         # Convert the timestep t to an embedding
         timestep_embedding = self.time_proj(t)
 
+        if self._is_class_conditional:
+            assert y is not None and y.shape == (x.shape[0],)
+            timestep_embedding = timestep_embedding + self.label_proj(y)
+
         # Initial convolution
-        h = self.initial_convolution(x)  # B,C=1,H,W -> B,C=32,H,W
+        h = self.initial_convolution(x)
 
-        # Downsampling blocks
-        skips = [h]
-        for i, layer in enumerate(self.downs):
-            block1, attn1, block2, attn2, downsample = layer
-            h = block1(h, time_emb=timestep_embedding)
-            h = attn1(h, y)
-            skips.append(h)
-            h = block2(h, time_emb=timestep_embedding)
-            h = attn2(h, y)
-            skips.append(h)
-            h = downsample(h)
-
-            if i != len(self.downs) - 1:
-                skips.append(h)
-
-        # Middle layers
-        middle_block1, middle_attn, middle_block2 = self.middle
-        h = middle_block1(h, time_emb=timestep_embedding)
-        h = middle_attn(h, y)
-        h = middle_block2(h, time_emb=timestep_embedding)
-
-        for i, layer in enumerate(self.ups):
-            block1, attn1, block2, attn2, block3, attn3, upsample = layer
-
-            h = block1(torch.cat([h, skips.pop()], dim=1), time_emb=timestep_embedding)
-            h = attn1(h, y)
-            h = block2(torch.cat([h, skips.pop()], dim=1), time_emb=timestep_embedding)
-            h = attn2(h, y)
-            h = block3(torch.cat([h, skips.pop()], dim=1), time_emb=timestep_embedding)
-            h = attn3(h, y)
-            h = upsample(h)
+        hs = [h]
+        for module in self.downs:
+            h = module(h, context=context, time_emb=timestep_embedding)
+            hs.append(h)
+        h = self.middle(h, context=context, time_emb=timestep_embedding)
+        for module in self.ups:
+            cat_in = torch.cat([h, hs.pop()], dim=1)
+            h = module(cat_in, context=context, time_emb=timestep_embedding)
 
         h = self.final_projection(h)
+
+        if self._is_v_param:
+            return torch.split(h, self._output_channels, dim=1)
         return h

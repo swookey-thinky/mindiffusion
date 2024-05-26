@@ -4,7 +4,10 @@ This package implements multi-head cross attention from "Attention Is All You Ne
 """
 
 from einops import rearrange
+import math
 import torch
+
+from layers import conv_nd, zero_module
 
 
 class CrossAttention(torch.nn.Module):
@@ -50,3 +53,96 @@ class CrossAttention(torch.nn.Module):
         out = self.to_out(out)
         out = self.dropout(out)
         return out
+
+
+class SelfAttention(torch.nn.Module):
+    """One head of self-attention"""
+
+    def __init__(self, input_channels):
+        super().__init__()
+        self.key = torch.nn.Linear(input_channels, input_channels, bias=False)
+        self.query = torch.nn.Linear(input_channels, input_channels, bias=False)
+        self.value = torch.nn.Linear(input_channels, input_channels, bias=False)
+        self.proj = torch.nn.Linear(input_channels, input_channels, bias=False)
+        self.normalize = torch.nn.GroupNorm(num_groups=32, num_channels=input_channels)
+
+    def forward(self, x):
+        B, C, H, W = x.shape
+
+        h = self.normalize(x)
+
+        # Move channels to the end
+        h = torch.permute(h, (0, 2, 3, 1))
+        k = self.key(h)  # (B,H,W,C)
+        q = self.query(h)  # (B,H,W,C)
+        v = self.value(h)  # (B,H,W,C)
+
+        # compute attention scores ("affinities")
+        w = torch.einsum("bhwc,bHWc->bhwHW", q, k) * (int(C) ** (-0.5))  # (B,H,W,H,W)
+        w = torch.reshape(w, [B, H, W, H * W])  # (B, H, W, H*W)
+        w = torch.nn.functional.softmax(w, dim=-1)
+        w = torch.reshape(w, [B, H, W, H, W])
+
+        h = torch.einsum("bhwHW,bHWc->bhwc", w, v)
+        h = self.proj(h)
+        h = torch.permute(h, (0, 3, 1, 2))
+        return x + h
+
+
+class MultiHeadSelfAttention(torch.nn.Module):
+    """Multihead Self Attention
+
+        An attention block that allows spatial positions to attend to each other.
+
+    Originally ported from here, but adapted to the N-d case.
+    https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/models/unet.py#L66.
+    """
+
+    def __init__(self, channels, num_heads=1):
+        super().__init__()
+        self.channels = channels
+        self.num_heads = num_heads
+
+        self.norm = torch.nn.GroupNorm(num_groups=32, num_channels=channels)
+        self.qkv = conv_nd(1, channels, channels * 3, 1)
+        self.attention = QKVAttention(num_heads=num_heads)
+        self.proj_out = zero_module(conv_nd(1, channels, channels, 1))
+
+    def forward(self, x):
+        b, c, *spatial = x.shape
+        x = x.reshape(b, c, -1)
+        qkv = self.qkv(self.norm(x))
+        qkv = qkv.reshape(b * self.num_heads, -1, qkv.shape[2])
+        h = self.attention(qkv)
+        h = h.reshape(b, -1, h.shape[-1])
+        h = self.proj_out(h)
+        return (x + h).reshape(b, c, *spatial)
+
+
+class QKVAttention(torch.nn.Module):
+    """A module which performs QKV attention."""
+
+    def __init__(self, num_heads):
+        super().__init__()
+        self.num_heads = num_heads
+
+    def forward(self, qkv):
+        """Apply QKV attention.
+
+        Args:
+            qkv: an [B x (H * C * 3) x T] tensor of Qs, Ks, and Vs.
+
+        Returns:
+            A [B x (H * C) x T] tensor after attention.
+        """
+        bs, width, length = qkv.shape
+        assert width % (3 * self.num_heads) == 0
+        ch = width // (3 * self.num_heads)
+        q, k, v = qkv.reshape(bs * self.num_heads, ch * 3, length).split(ch, dim=1)
+        scale = 1 / math.sqrt(math.sqrt(ch))
+        weight = torch.einsum(
+            "bct,bcs->bts", q * scale, k * scale
+        )  # More stable with f16 than dividing afterwards
+        weight = torch.softmax(weight.float(), dim=-1).type(weight.dtype)
+        a = torch.einsum("bts,bcs->bct", weight, v)
+        return a.reshape(bs, -1, length)

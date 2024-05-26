@@ -22,12 +22,15 @@ from utils import (
     normalize_to_neg_one_to_one,
     unnormalize_to_zero_to_one,
 )
-from autoencoder import MNISTAutoEncoderKL
+from autoencoders.simple import MNISTAutoEncoderKL
+from utils import load_yaml
 
-OUTPUT_NAME = "output/autoencoder"
+OUTPUT_NAME = "output/autoencoder_simple"
 
 
-def run_lesson_11_autoencoder(num_training_steps: int, batch_size: int):
+def run_lesson_11_autoencoder(
+    num_training_steps: int, batch_size: int, config_path: str
+):
     # Ensure the output directories exist
     os.makedirs(OUTPUT_NAME, exist_ok=True)
 
@@ -53,8 +56,11 @@ def run_lesson_11_autoencoder(num_training_steps: int, batch_size: int):
     # Create the dataloader for the MNIST dataset
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
+    # Open the model configuration
+    config = load_yaml(config_path)
+
     # Create the autoencoder we will train.
-    vae = MNISTAutoEncoderKL()
+    vae = MNISTAutoEncoderKL(config)
     summary(
         vae,
         [(128, 1, 32, 32)],
@@ -62,7 +68,8 @@ def run_lesson_11_autoencoder(num_training_steps: int, batch_size: int):
 
     # The accelerate library will handle of the GPU device management for us.
     accelerator = Accelerator(
-        DataLoaderConfiguration(split_batches=False), mixed_precision="no"
+        dataloader_config=DataLoaderConfiguration(split_batches=False),
+        mixed_precision="no",
     )
     device = accelerator.device
 
@@ -154,10 +161,9 @@ def run_lesson_11_autoencoder(num_training_steps: int, batch_size: int):
 
                 # Generate an unconditional sample as well from
                 # a random latent.
-                with torch.no_grad():
-                    noise = torch.randn(batch_size, 1, 64).to(device)
+                with torch.inference_mode():
+                    noise = torch.randn(batch_size, 1, 8, 8).to(device)
                     x_hat = vae.decoder(noise)
-                    x_hat = rearrange(x_hat, "b c (h w) -> b c h w", h=32, w=32)
                     x_hat = unnormalize_to_zero_to_one(x_hat)
 
                     utils.save_image(
@@ -188,10 +194,13 @@ def main(override=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_training_steps", type=int, default=30000)
     parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--config_path", type=str, default="configs/mnist_ldm.yaml")
     args = parser.parse_args()
 
     run_lesson_11_autoencoder(
-        num_training_steps=args.num_training_steps, batch_size=args.batch_size
+        num_training_steps=args.num_training_steps,
+        batch_size=args.batch_size,
+        config_path=args.config_path,
     )
 
 
