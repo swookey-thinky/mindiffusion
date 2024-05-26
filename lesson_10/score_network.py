@@ -132,7 +132,7 @@ class MNistUnet(torch.nn.Module):
                         if config.model.resblock_updown
                         else Downsample(
                             ch,
-                            config.model.resamp_with_conf,
+                            config.model.resamp_with_conv,
                             dims=2,
                         )
                     )
