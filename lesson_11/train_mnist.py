@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from utils import cycle, freeze, get_obj_from_str, load_yaml, DotConfig
 from text_encoder import FrozenCLIPEmbedder
-from ldm import GaussianDiffusion_LatentDiffusion
+from diffusion_model import GaussianDiffusion_LatentDiffusion
 from score_network import MNistUnet
 
 OUTPUT_NAME = "output"
