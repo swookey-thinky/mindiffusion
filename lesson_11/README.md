@@ -36,23 +36,24 @@ Output files (including sample generated images of the model in progress) are st
 
 ## Results
 
-After training the network for 10k steps, the model is able to generate samples like:
+After training the network for 30k steps, the model is able to generate samples like:
 
-![LDM Unconditional](https://drive.google.com/uc?export=view&id=1q3WLEObOM9gdSpc8QsvDlYO4AM4nIZuE)
+![LDM Unconditional](https://drive.google.com/uc?export=view&id=1PN7t8qNKOMbqvNqM3L6EeQThUxrW6L2n)
 
 And here is the result of conditionally sampling the model, after 10k steps of training. For conditioning,
 we used the following text prompts:
+
 <pre>
-0 0 8 7 nine three seven 5 
-zero five five nine 5 4 9 eight 
-four 3 7 nine one 9 5 seven 
-nine two four 3 six 5 one eight 
-5 seven six nine five seven 0 7 
-7 0 5 seven 4 zero four nine 
-4 5 9 seven 8 8 zero 2 
-zero six seven 3 seven 5 four nine 
+one nine two 3 five 0 3 one 
+8 zero seven 0 nine 9 nine two 
+7 7 eight 7 0 seven one eight 
+7 six 0 0 nine 0 7 one 
+9 8 seven 3 3 two two 6 
+seven 1 6 4 eight eight three seven 
+4 three 2 6 one five eight seven 
+7 nine 4 8 0 0 zero six 
 </pre>
 
-![LDM Conditional](https://drive.google.com/uc?export=view&id=1lJDJRjNmHMzInyF3d6ujfg9XCvJnQVmR)
+![LDM Conditional](https://drive.google.com/uc?export=view&id=1l0l-BV7aNXEhYyeT0a2ItodEHVuPVV-L)
 
 As you can see, the model has successfully learned how to generate instances of the requested classes.
