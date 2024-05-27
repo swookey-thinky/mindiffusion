@@ -21,15 +21,15 @@ Follow the instructions from [Requirements For All Lessons](https://github.com/s
 This lesson contains two parts. First, we need to train the VAE that will be used to compress the input data distribution into a lower dimension latent space:
 
 ```
-> python train_autoencoder.py
+> python autoencoders/train.py
 ```
 
-The saved checkpoints, and sampled images, are saved into the `output/autoencoder` directory.
+The saved checkpoints, and sampled images, are saved into the `output/autoencoderskl` directory.
 
 Second, with the above trained VAE, we can now train the diffusion model. To train the diffusion model, simply run the `train_mnist.py` script under this directory in your virtual environment, and point the script to the trained VAE checkpoint:
 
 ```
-> python train_mnist.py --autoencoder_checkpoint output/autoencoder/vae-10000.pt
+> python train_mnist.py --autoencoder_checkpoint output/autoencoderkl/vae-29900.pt
 ```
 
 Output files (including sample generated images of the model in progress) are stored by timestep in the `output` directory.
