@@ -1,4 +1,4 @@
-"""Lesson 11 - Gaussian Diffusion Model using Latent Diffusion Models.
+"""Lesson 12 - Gaussian Diffusion Model using Latent Diffusion Models.
 
 This module implements the Latent Gaussian Diffusion model from the High-Resolution Image Synthesis
 with Latent Diffusion Models.
