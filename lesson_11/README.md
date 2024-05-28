@@ -1,4 +1,4 @@
-# Lesson 10 - Guided Diffusion
+# Lesson 11 - Guided Diffusion
 
 In this lesson we are going to learn about Guided Diffusion from the paper [Diffusion Models Beat GANs on Image Synthesis](https://arxiv.org/abs/2105.05233). This paper introduced the concept of *classifier guidance* to guide the diffusion model during sampling.
 
