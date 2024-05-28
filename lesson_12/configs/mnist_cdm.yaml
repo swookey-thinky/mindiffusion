@@ -1,0 +1,112 @@
+# Configuration for Cascaded Diffusion Model. Defines a 2 stage
+# cascaded diffusion modules with a base stage at 8x8 and a
+# single cascaded super-resolution stage at 32x32.
+num_cascades: 1
+
+# Defines the base diffusion model, which operates
+# at 8x8 resolution.
+base_stage:
+  model:
+    # The number of input channels to the model
+    input_channels: 1
+    # The number of output channels to the model
+    output_channels: 1
+    # The spatial size of the input to the model
+    input_spatial_size: 8
+    # The number of noise scales
+    num_scales: 1000
+    # The number of features/channels at the start of
+    # the network.
+    num_features: 128
+    # Resnet block channel multipliers.
+    channel_multipliers: [1, 2]
+    # The number of resnet blocks per resolution.
+    num_resnet_blocks: 2
+    # The resolution to apply attention layers.
+    attention_resolutions: [4]
+    # The number of attention heads to use
+    num_attention_heads_downsample: 4
+    num_attention_heads_upsample: 4
+    # Use scale/shift of the GroupNorm in the timestep embedding.
+    # This is also called Adaptive Group Normalization.
+    use_scale_shift_norm: True
+    # Perform resampling using convolutions.
+    resamp_with_conv: False
+    # BigGAN style resnet block to perform up/down sampling.
+    resblock_updown: False
+    # The type of resnet block to use
+    resnet_block_type: 'biggan'
+    # Dropout scale
+    dropout: 0.1
+    # Is this a v or epsilon-param model?
+    is_v_param: False
+    # True if this is a class conditional model
+    is_class_conditional: False
+    # The number of heads in the attention layers
+    attention_heads: 1
+    # The number of channels in the attention layers
+    attention_channels: 64
+
+  data:
+    # Spatial width/height of the data input to the model.
+    image_size: 8
+    # Number of channels in the input data
+    num_channels: 1
+    # The number of classes in the dataset
+    num_classes: 10
+
+
+# Defines an super-resolution stage which goes
+# from 8x8 -> 32x32.
+cascaded_stage_0:
+  model:
+    # The number of input channels to the model
+    input_channels: 2
+    # The number of output channels to the model
+    output_channels: 1
+    # The spatial size of the input to the model
+    input_spatial_size: 32
+    # The number of noise scales
+    num_scales: 1000
+    # The number of features/channels at the start of
+    # the network.
+    num_features: 128
+    # Resnet block channel multipliers.
+    channel_multipliers: [1, 2, 2, 2]
+    # The number of resnet blocks per resolution.
+    num_resnet_blocks: 2
+    # The resolution to apply attention layers.
+    attention_resolutions: [16]
+    # The number of attention heads to use
+    num_attention_heads_downsample: 4
+    num_attention_heads_upsample: 4
+    # Use scale/shift of the GroupNorm in the timestep embedding.
+    # This is also called Adaptive Group Normalization.
+    use_scale_shift_norm: True
+    # Perform resampling using convolutions.
+    resamp_with_conv: False
+    # BigGAN style resnet block to perform up/down sampling.
+    resblock_updown: False
+    # The type of resnet block to use
+    resnet_block_type: 'biggan'
+    # Dropout scale
+    dropout: 0.1
+    # Is this a v or epsilon-param model?
+    is_v_param: False
+    # True if this is a class conditional model
+    is_class_conditional: False
+    # The number of heads in the attention layers
+    attention_heads: 1
+    # The number of channels in the attention layers
+    attention_channels: 64
+    # True if we should apply gaussian conditioning
+    # augmentation.
+    gaussian_conditioning_augmentation: True
+
+  data:
+    # Spatial width/height of the data input to the model.
+    image_size: 32
+    # Number of channels in the input data
+    num_channels: 1
+    # The number of classes in the dataset
+    num_classes: 10
