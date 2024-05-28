@@ -45,7 +45,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 7 | November 2020 | Score SDE | [Score-Based Generative Modeling through Stochastic Differential Equations](https://arxiv.org/abs/2011.13456) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_07)
 8 | February 2021 | DaLL-E | [Zero-Shot Text-to-Image Generation](https://arxiv.org/abs/2102.12092) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_08)
 9 | February 2021 | IDDPM | [Improved Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2102.09672) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_09)
-10 | April 2021 | SR3 | [Image Super-Resolution via Iterative Refinement](https://arxiv.org/abs/2104.07636) | | | 
+10 | April 2021 | SR3 | [Image Super-Resolution via Iterative Refinement](https://arxiv.org/abs/2104.07636) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_10)
 11 | May 2021 | Guided Diffusion | [Diffusion Models Beat GANs on Image Synthesis](https://arxiv.org/abs/2105.05233) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_11)
 12 | May 2021 | CDM | [Cascaded Diffusion Models for High Fidelity Image Generation](https://arxiv.org/abs/2106.15282) | | | 
 13 | December 2021 | Latent Diffusion | [High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_13)
