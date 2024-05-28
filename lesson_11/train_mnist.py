@@ -1,4 +1,4 @@
-"""Lesson 10 - Guided Diffusion
+"""Lesson 11 - Guided Diffusion
 
 Training script for training a Gaussian Diffusion Model from
 "Diffusion Models Beat GANs on Image Synthesis" (https://arxiv.org/abs/2105.05233).
