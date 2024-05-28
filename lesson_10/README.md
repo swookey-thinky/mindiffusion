@@ -26,8 +26,6 @@ Output files (including sample generated images of the model in progress) are st
 
 After training the network for 18k steps, the model is able to generate samples like the below:
 
-https://drive.google.com/file/d/1CaRU1TXoZQEHz7xiHqguMYQqNoURU5Yn/view?usp=sharing
-
 | High Resolution Target | Low Resolution Context | SR3 Upsampled
 | ----- | ----- | -----
 | ![HR](https://drive.google.com/uc?export=view&id=1_kh2eBgzMNOf1GdeJ-jpRr-6baUrgX2t) | ![LR](https://drive.google.com/uc?export=view&id=1CaRU1TXoZQEHz7xiHqguMYQqNoURU5Yn) | ![SR3](https://drive.google.com/uc?export=view&id=1EkcuWrND6oT86n1khKIsZJb3L6KmcgMo)
