@@ -24,8 +24,8 @@ Output files (including sample generated images of the model in progress) are st
 
 ## Results
 
-After training the network for 10k steps, the model is able to generate samples like the below:
+After training the network for 15k steps, the model is able to generate samples like the below:
 
-<!-- | High Resolution Sample | Base Stage Output 
+| High Resolution Sample | Base Stage Output 
 | ----- | ----- | -----
-| ![CDM](https://drive.google.com/uc?export=view&id=1_kh2eBgzMNOf1GdeJ-jpRr-6baUrgX2t) | ![CDM Base Stage](https://drive.google.com/uc?export=view&id=1CaRU1TXoZQEHz7xiHqguMYQqNoURU5Yn)  -->
+| ![CDM](https://drive.google.com/uc?export=view&id=13Ii508SuNxIyVD8tirihxOe87mQhrgYn) | ![CDM Base Stage](https://drive.google.com/uc?export=view&id=1D8VTcd0jVxVMZAApzLE6LscQu_VGXPmX) 
