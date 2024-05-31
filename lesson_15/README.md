@@ -33,3 +33,18 @@ After training the network for 10k steps, the model is able to generate samples 
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- 
 | ![GLIDE 0.0](https://drive.google.com/uc?export=view&id=10LyT0Ynsn3ti1wOEqdG4jnW_k3NamwZl) | ![GLIDE 1.0](https://drive.google.com/uc?export=view&id=1q46FWPWWYQPTv-8wYlZp55RQeIBI0dad) | ![GLIDE 2.0](https://drive.google.com/uc?export=view&id=1Pq7mlhJam8ARx87_rjzy8LTgFd0WNbDD) | ![GLIDE 4.0](https://drive.google.com/uc?export=view&id=1gYByHVKAqJuxALn2kfGNeuj-dNUJ85-I) | ![GLIDE 7.0](https://drive.google.com/uc?export=view&id=16wXV6gn8hPAoKEheRVgU3JrKllf8sek0) | ![GLIDE 10.0](https://drive.google.com/uc?export=view&id=1yGuVixiUr4JPVPsYx5UVdoQZ65Dahl7v) | ![GLIDE 20.0](https://drive.google.com/uc?export=view&id=1trNGDUg637gJfBR_qgfbjdtUzeNwovdv)
 
+The prompts we used for generation above were:
+
+<pre>
+1 seven 6 eight two 3 2 4 
+4 2 0 zero 8 4 5 7 
+zero 2 1 three seven 7 zero 0 
+four 0 9 3 1 4 three four 
+two 2 nine eight zero two four two 
+five six four four seven four 4 three 
+two nine 2 seven eight 3 1 0 
+7 five 1 nine 9 3 0 five   
+</pre>
+
+You can see from the above that `cfg=0.0` corresponds to unconditional generation.
+
