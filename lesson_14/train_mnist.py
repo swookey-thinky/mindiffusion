@@ -1,4 +1,4 @@
-"""Lesson 12 - Cascaded Diffusion Model."""
+"""Lesson 14 - Classifier Free Guidance."""
 
 from accelerate import Accelerator, DataLoaderConfiguration
 import argparse
@@ -64,7 +64,9 @@ def run_lesson_12(
                 config.model.input_spatial_size,
             ),
             (128,),
+            (128,),
         ],
+        dtypes=[torch.float32, torch.float32, torch.int32],
     )
 
     # The accelerate library will handle of the GPU device management for us.
@@ -179,20 +181,20 @@ def sample(
     classes = torch.randint(
         0, config.data.num_classes, size=(num_samples,), device=device
     )
-    output = diffusion_model.sample(num_samples=num_samples, classes=classes)
 
-    if diffusion_model._is_class_conditional:
+    for cfg in [1.0, 2.0, 4.0, 7.0, 10.0, 20.0]:
+        output = diffusion_model.sample(
+            num_samples=num_samples, classes=classes, classifier_free_guidance=cfg
+        )
+
         samples, labels = output
-    else:
-        samples = output
-        labels = None
 
-    # Save the samples into an image grid
-    utils.save_image(
-        samples,
-        str(f"{OUTPUT_NAME}/sample-{step}.png"),
-        nrow=int(math.sqrt(num_samples)),
-    )
+        # Save the samples into an image grid
+        utils.save_image(
+            samples,
+            str(f"{OUTPUT_NAME}/sample-{step}-cfg-{cfg}.png"),
+            nrow=int(math.sqrt(num_samples)),
+        )
 
     # Save the labels if we have them
     if labels is not None:
@@ -223,7 +225,7 @@ def main(override=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_training_steps", type=int, default=10000)
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--config_path", type=str, default="configs/mnist_cdm.yaml")
+    parser.add_argument("--config_path", type=str, default="configs/mnist_cfg.yaml")
 
     args = parser.parse_args()
 

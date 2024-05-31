@@ -28,6 +28,7 @@ from utils import (
     unnormalize_to_zero_to_one,
     DotConfig,
 )
+from score_network import MNistUnet
 
 
 class GaussianDiffusion_DDPM(torch.nn.Module):
@@ -36,9 +37,9 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
     This is the same core algorithm as DDPM, IDDPM, and Guided Diffusion.
     """
 
-    def __init__(self, score_network_type: Type, config: DotConfig):
+    def __init__(self, config: DotConfig):
         super().__init__()
-        self._score_network = score_network_type(config)
+        self._score_network = MNistUnet(config)
         self._num_timesteps = config.model.num_scales
         self._is_v_param = config.model.is_v_param
         self._is_class_conditional = config.model.is_class_conditional
@@ -173,7 +174,7 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
             # Create the NULL tokens
             unconditional_y = torch.zeros_like(y)
             # Sample the unconditional tokens
-            unconditional_probability = torch.randn_like(y)
+            unconditional_probability = torch.rand(size=y.shape, device=y.device)
             y = torch.where(
                 unconditional_probability <= self._unconditional_guidance_probability,
                 unconditional_y,
@@ -238,6 +239,7 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
         num_samples: int = 16,
         guidance_fn: Optional[Callable] = None,
         classes: Optional[torch.Tensor] = None,
+        classifier_free_guidance: Optional[float] = None,
     ):
         """Unconditionally/conditionally sample from the diffusion model."""
         # The output shape of the data.
@@ -276,18 +278,22 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
             low_res_x_0 = None
 
         latent_samples = self._p_sample_loop(
-            shape, low_res_x_0, guidance_fn, classes=classes
+            shape,
+            low_res_x_0,
+            guidance_fn,
+            classes=classes,
+            classifier_free_guidance=classifier_free_guidance,
         )
 
         if self._is_class_conditional:
-            latents, _ = latent_samples
+            latents, labels = latent_samples
         else:
             latents = latent_samples
-
+            labels = classes
         # Decode the samples from the latent space
         samples = unnormalize_to_zero_to_one(latents)
         self.train()
-        return samples
+        return samples, labels
 
     def get_classifier_guidance(
         self, classifier: torch.nn.Module, classifier_scale: float
@@ -429,6 +435,7 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
         clip_denoised=True,
         epsilon_v_param: Optional[List[torch.Tensor]] = None,
         y=None,
+        classifier_free_guidance: Optional[float] = None,
     ):
         """Calculates the mean and the variance of the reverse process distribution.
 
@@ -462,7 +469,12 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
 
         # If we are using classifier free guidance, then calculate the unconditional
         # epsilon as well.
-        if self._classifier_free_guidance > 0.0:
+        cfg = (
+            classifier_free_guidance
+            if classifier_free_guidance is not None
+            else self._classifier_free_guidance
+        )
+        if cfg > 0.0:
             assert y is not None
 
             # Unconditionally sample the model
@@ -475,7 +487,7 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
                     y=torch.zeros_like(y),
                 )
             )
-            w = self._classifier_free_guidance
+            w = cfg
             epsilon_theta = uncond_epsilon_theta + w * (
                 epsilon_theta - uncond_epsilon_theta
             )
@@ -505,6 +517,7 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
         low_res_context: Optional[torch.Tensor],
         guidance_fn=None,
         classes=None,
+        classifier_free_guidance: Optional[float] = None,
     ):
         """Defines Algorithm 2 sampling using notation from DDPM implementation.
 
@@ -548,7 +561,12 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
         ):
             t = torch.tensor([t] * shape[0], device=device)
             x_t_minus_1 = self._p_sample(
-                x_t, t=t, low_res_context=low_res_context, y=y, guidance_fn=guidance_fn
+                x_t,
+                t=t,
+                low_res_context=low_res_context,
+                y=y,
+                guidance_fn=guidance_fn,
+                classifier_free_guidance=classifier_free_guidance,
             )
             x_t = x_t_minus_1
 
@@ -557,7 +575,13 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
         return x_t
 
     def _p_sample(
-        self, x, t, low_res_context: Optional[torch.Tensor], y, guidance_fn=None
+        self,
+        x,
+        t,
+        low_res_context: Optional[torch.Tensor],
+        y,
+        guidance_fn=None,
+        classifier_free_guidance: Optional[float] = None,
     ):
         """Reverse process single step.
 
@@ -579,7 +603,12 @@ class GaussianDiffusion_DDPM(torch.nn.Module):
 
         with torch.no_grad():
             model_mean, model_variance, model_log_variance = self._p_mean_variance(
-                x=x, t=t, low_res_context=low_res_context, clip_denoised=True, y=y
+                x=x,
+                t=t,
+                low_res_context=low_res_context,
+                clip_denoised=True,
+                y=y,
+                classifier_free_guidance=classifier_free_guidance,
             )
 
         # No noise if t = 0
