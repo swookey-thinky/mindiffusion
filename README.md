@@ -52,7 +52,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 13a | | Stable Diffusion v1 | | | |
 13b | | Stable Diffusion v2 | | | |
 14 | December 2021 | CFG| [Classifier-Free Diffusion Guidance](https://arxiv.org/abs/2207.12598) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_14)
-15 | December 2021 | GLIDE| [GLIDE: Towards Photorealistic Image Generation and Editing with Text-Guided Diffusion Models](https://arxiv.org/abs/2112.10741) | | |
+15 | December 2021 | GLIDE| [GLIDE: Towards Photorealistic Image Generation and Editing with Text-Guided Diffusion Models](https://arxiv.org/abs/2112.10741) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_15)
 16 | April 2022 | DaLL-E 2| [Hierarchical Text-Conditional Image Generation with CLIP Latents](https://arxiv.org/abs/2204.06125) | | |
 17 | May 2022 | Imagen | [Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding](https://arxiv.org/abs/2205.11487) | | |
 18 | October 2022 | | [Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747) | | |
