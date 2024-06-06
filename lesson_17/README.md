@@ -41,7 +41,7 @@ Generated samples will be saved to `output/samples_dalle2`.
 
 ## Results
 
-After training the prior network for 30k steps and the decoder network for 10k steps, the model is able to generate samples like the below:
+After training the prior network for 30k steps and the decoder network for 14k steps, the full DaLL\*E 2 pipeline is able to generate samples like the below:
 
 ![DaLL\*E 2](https://drive.google.com/uc?export=view&id=1SVWvGD0FhakjL2G9QCyi0TbiaZ_6ILKM)
 
