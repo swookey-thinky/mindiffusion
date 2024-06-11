@@ -1,4 +1,4 @@
-"""Lesson 11 - Image Super-Resolution via Iterative Refinement.
+"""Lesson 10 - Image Super-Resolution via Iterative Refinement.
 
 This module implements the SR3 Image super-resolution diffusion algorithm. The
 only real difference between this model and others (like DDPM) is we concatenate
