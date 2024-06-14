@@ -51,11 +51,12 @@ Generated samples will be saved to `output/samples_dalle2`.
 
 ## Results
 
-After training the prior network for 30k steps and the decoder network for 14k steps, the full DaLL\*E 2 pipeline is able to generate samples like the below:
+After training the prior network for 10k steps, the full Imagen pipeline is able to generate samples like the below:
 
-![DaLL\*E 2](https://drive.google.com/uc?export=view&id=1SVWvGD0FhakjL2G9QCyi0TbiaZ_6ILKM)
+<!--
+ ![Imagen](https://drive.google.com/uc?export=view&id=1SVWvGD0FhakjL2G9QCyi0TbiaZ_6ILKM)
 
-The prompts we used for generation above were:
+ The prompts we used for generation above were:
 
 <pre>
 8 one seven 1 7 six 6 two 
@@ -67,4 +68,4 @@ five six one 1 0 seven six 3
 0 three 2 one 3 nine six 0 
 2 9 zero 4 7 two 9 eight 
 </pre>
-
+-->
