@@ -1,0 +1,21 @@
+# Configuration file for Imagen from the paper "Photorealistic Text-to-Image Diffusion
+# Models with Deep Language Understanding" (https://arxiv.org/abs/2205.11487).
+# Imagen is a cascade of diffusion, and on MNIST here, we have only a single super-resolution
+# model, versus the 2 that were used in the paper.
+diffusion_cascade:
+  cascade_layer_1:
+    # Base DDPM layer at 8x8 resolution.
+    config: "configs/imagen_base.yaml"
+  cascade_layer_2:
+    # An 8x8 -> 32x32 super resolution model.
+    config: "configs/imagen_8x8_to_32x32.yaml"
+
+# Describes the dataset used in training.
+data:
+  # Spatial width/height of the data input to the model.
+  image_size: 32
+  # Number of channels in the input data
+  num_channels: 1
+  # The number of classes in the dataset
+  num_classes: 10
+

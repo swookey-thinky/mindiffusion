@@ -1,0 +1,190 @@
+# Imagen base model. This is an epsilon parameterized 8x8 text conditioned diffusion model,
+# using a T5 small text embedding as the text conditioning mechanism. Base model super-resolution
+# architecture is taken from "Cascaded Diffusion Models for High Fidelity Image Generation"
+# (https://arxiv.org/abs/2102.09672). Improvements over the base model from the Imagen paper
+# that are reflected here include:
+#   - Embedding the gaussian conditioning augmentation level during gaussian
+#     conditioning augmentation at training and sampling time. Sampling uses a fixed
+#     augmentation level.
+#   - Efficient UNet architecture
+#   - Text embeddings added as conditioning at each attention layer
+#   - More model parameters at the lower resolution blocks
+#   - Scaling the skip connections
+#   - Shifting the order of the upsampling and downsampling operations
+super_resolution:
+  # The low resolution input size.
+  low_resolution_spatial_size: 8
+  # The upsampled output size of the model.
+  super_resolution_spatial_size: 32
+  # The key where the low resolution input samples are stored.
+  conditioning_key: "low_resolution_images"
+  # The augmentation level to use for sampling
+  sampling_augmentation_level: 0.25
+
+diffusion:
+  # Sampling section determines the size of the sampled output
+  # from the model, and defines the sampling method used
+  sampling:
+    target: image_diffusion.sampling.AncestralSampler
+    params:
+      output_channels: 1
+      output_spatial_size: 32
+  # The noise scheduler to use with the forward diffusion process.
+  noise_scheduler:
+    # The number of noise scales
+    num_scales: 1000
+    # The schedule type
+    schedule: "cosine"
+    # Loss type to use for noise prediction.
+    loss_type: "l2"
+    sampler:
+      target: image_diffusion.importance_sampling.UniformSampler
+      params:
+        num_timesteps: 1000
+  # A preprocessor to use with the context before sending to the score network.
+  context_preprocessing:
+      # The Prompts Preprocessor converts the list of text prompts in the context
+      # into a batch of text tokens of shape (B, text_context_size)
+      - target: image_diffusion.conditioning.T5TextPromptsPreprocessor
+        params:
+          # The max length of the text token sequence
+          max_length: 77
+          # The name of the T5 text model to use
+          model_name: "google/t5-v1_1-small"
+  # A preprocessor for input to the model. For super resolution, this is
+  # where we attach the low resolution input to the model input.
+  input_preprocessing:
+    target: image_diffusion.layers.super_resolution.InputPreprocessor
+    params:
+      low_resolution_spatial_size: 8
+      super_resolution_spatial_size: 32
+      context_input_key: "low_resolution_images"
+      apply_gaussian_conditioning_augmentation: True
+
+  # Setting for classifier free guidance.
+  classifier_free_guidance:
+    # Classifier-free guidance scale, where the value is >= 1.0
+    classifier_free_guidance: 1.0
+    # Unconditional guidance probability
+    unconditional_guidance_probability: 0.2
+    # The context signals to apply guidance to.
+    signals: ["text_prompts"]
+    # For classifier free guidance, we need the ability to create an unconditional
+    # context given the conditional context. This unconditional context needs
+    # to be applied in both training and sampling, and will return a new
+    # context dictionary given the original context dictionary.
+    unconditional_context:
+      target: image_diffusion.conditioning.UnconditionalTextPromptsAdapter
+      params: {}
+  # Defines the score network for predicting the noise parameter
+  score_network:
+    target: image_diffusion.score_networks.efficient_unet.Unet
+    params:
+      # The number of input channels to the model. For super resolution,
+      # we concatenate the low resolution images, scaled to the output
+      # size of the model, to the original diffusion input.
+      input_channels: 2
+      # The number of output channels to the model.
+      output_channels: 1
+      # The spatial size of the input to the model.
+      input_spatial_size: 32
+      # The number of features/channels at the start of
+      # the network. This defines the inner dimensions
+      # of the model.
+      num_features: 128
+      # Resnet block channel multipliers.
+      channel_multipliers: [1, 2, 2, 2]
+      # The number of resnet blocks per resolution.
+      num_resnet_blocks: [1, 1, 2, 4]
+      # Use scale/shift of the GroupNorm in the timestep embedding.
+      # This is also called Adaptive Group Normalization.
+      use_scale_shift_norm: True
+      # Perform resampling using convolutions.
+      resamp_with_conv: False
+      # BigGAN style resnet block to perform up/down sampling.
+      resblock_updown: False
+      # The type of resnet block to use
+      resnet_block_type: 'biggan'
+      # Dropout scale
+      dropout: 0.1
+      # Does the model include a learned sigma or a fixed sigma.
+      is_learned_sigma: False
+      # True if this is a class conditional model
+      is_class_conditional: False
+      # The number of classes for a class conditional model.
+      # Only used if is_class_conditional=True.
+      num_classes: 10
+      # Defines the attention mechanism used
+      attention:
+        # The resolution to apply attention layers.
+        attention_resolutions: [16]
+        # The number of heads in the attention layers
+        attention_heads: 2
+        # The number of channels in the attention layers
+        attention_channels: 64
+        # True is causal attention masks should be used
+        is_causal: False
+      # Additional conditioning signals for the model. The projections
+      # defined here will be applied before running through the rest of the
+      # score network.
+      conditioning:
+        # The signals (keys in the dictionary) that are available in the conditioning
+        # context.
+        signals: ["timestep", "text_tokens"]
+        projections:
+          # A projection to apply to the integer timesteps.
+          timestep:
+            # Defines a projection incorporating the sinusoidal position embedding.
+            # Output size is (B, C, num_features * time_embedding_mult)
+            target: image_diffusion.layers.embedding.TimestepEmbeddingProjection
+            params:
+              num_features: 128
+              time_embedding_mult: 4
+          # A projection to apply to the text tokens in the conditioning context.
+          text_tokens:
+            # Defines an embedding which goes from text tokens at the given
+            # vocabulary size to text token embeddings.
+            target: image_diffusion.layers.embedding.T5TextTokensToEmbedding
+            params:
+              model_name: "google/t5-v1_1-small"
+        # The context transformer to use at the top of the score network. This transforms
+        # the context with a shared set of parameters.
+        context_transformer_head:
+          # Projects the text tokens into text embeddings using the projection
+          # defined for "text_tokens"
+          - target: image_diffusion.conditioning.TextTokenProjectionAdapter
+            params: {}
+          # Adds the gaussian conditioning augmentation level to the pooled
+          # timestep embeddings.
+          - target: image_diffusion.layers.super_resolution.GaussianConditioningAugmentationToTimestep
+            params:
+              num_features: 128
+              time_embedding_mult: 4
+        # The context transformer to use at each attention layer. This transforms
+        # the context with a different set of parameters at each attention layer.
+        context_transformer_layer:
+          target: image_diffusion.layers.attention.SpatialCrossAttention
+          params:
+            # The dimensionality of the context signal coming in.
+            # -1 signifies no context coming in, and this defaults to Multi-Head
+            # self attention.
+            context_dim: 77
+            # The number of heads in the attention layer.
+            heads: 2
+            # The dimensionality of each attention head.
+            dim_head: 64
+            # Dropout probability to use in training.
+            dropout: 0.1
+            # The context adapter for the conditioning signal
+            context_adapter:
+              target: image_diffusion.conditioning.TextEmbeddingsAdapter
+              params: {}
+# Describes the dataset used in training.
+data:
+  # Spatial width/height of the data input to the model.
+  image_size: 32
+  # Number of channels in the input data
+  num_channels: 1
+  # The number of classes in the dataset
+  num_classes: 10
+
