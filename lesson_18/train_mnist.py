@@ -413,7 +413,7 @@ def main(override=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_training_steps", type=int, default=10000)
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--config_path", type=str, default="configs/glide.yaml")
+    parser.add_argument("--config_path", type=str, default="configs/imagen.yaml")
     parser.add_argument("--sample_with_guidance", action="store_true")
     args = parser.parse_args()
 
