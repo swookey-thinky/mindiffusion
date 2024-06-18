@@ -58,7 +58,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 18 | May 2022 | Imagen | [Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding](https://arxiv.org/abs/2205.11487) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_18)
 19 | October 2022 | | [Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747) | | |
 20 | October 2022 | ERNIE-ViLG 2.0 | [ERNIE-ViLG 2.0: Improving Text-to-Image Diffusion Model with Knowledge-Enhanced Mixture-of-Denoising-Experts](https://arxiv.org/abs/2210.15257) | | |
-21 | December 2022 | DiT | [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748) | | |
+21 | December 2022 | DiT | [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_21)
 22 | January 2023 | Simple Diffusion | [Simple diffusion: End-to-end diffusion for high resolution images](https://arxiv.org/abs/2301.11093) | | |
 23 | February 2023 | ControlNet | [Adding Conditional Control to Text-to-Image Diffusion Models](https://arxiv.org/abs/2302.05543) | | |
 24 | May 2023 | RAPHAEL | [RAPHAEL: Text-to-Image Generation via Large Mixture of Diffusion Paths](https://arxiv.org/abs/2305.18295) | | |
