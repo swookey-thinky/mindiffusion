@@ -1,10 +1,12 @@
 accelerate==0.28.0
 einops==0.7.0
 ftfy==6.2.0
+ninja==1.11.1.1
+protobuf==5.27.1
 scipy==1.12.0
 torch==2.1.0
 torchinfo==1.8.0
 torchvision==0.16.0
 tqdm==4.66.2
 transformers==4.40.2
-ninja==1.11.1.1
+sentencepiece==0.2.0

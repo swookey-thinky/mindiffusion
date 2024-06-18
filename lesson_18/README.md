@@ -24,30 +24,13 @@ Follow the instructions from [Requirements For All Lessons](https://github.com/s
 
 ## Running the Lesson
 
-DaLL\*E 2 training involves 3 steps:
-
-1.) Train a CLIP model to generate image and text embeddings
-2.) Train the prior network to generate image embeddings given text embeddings
-3.) Train the decoder network to generate images from predicted image embeddings.
-
-For step 1.), we use a pretrained CLIP model from OpenAI. To train the prior network, use:
+Run the training script at `train_mnist.py` like:
 
 ```
-> python train_prior_mnist.py
+> python train_mnist.py
 ```
 
-This will generate model checkpoints in the `output/prior` directory. To train the decoder network, run:
-
-```
-> python train_decoder_mnist.py
-```
-
-This will save the decoder model checkpoints into `output/decoder`. In order to sample from the full pipeline (`text prompts -> image embeddings -> images`), you can run:
-
-```
-> python sample_dalle2.py --diffusion_prior <path to prior checkpoint> --diffusion_decoder <path to decoder checkpoint>
-```
-Generated samples will be saved to `output/samples_dalle2`.
+Generated samples will be saved to `output/imagen`.
 
 ## Results
 
