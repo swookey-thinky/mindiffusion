@@ -36,19 +36,17 @@ Generated samples will be saved to `output/imagen`.
 
 After training the prior network for 10k steps, the full Imagen pipeline is able to generate samples like the below:
 
-<!--
- ![Imagen](https://drive.google.com/uc?export=view&id=1SVWvGD0FhakjL2G9QCyi0TbiaZ_6ILKM)
+![Imagen](https://drive.google.com/uc?export=view&id=1MKyRgPKoPRFHLzd78aTA1K3QHgNm08Px)
 
  The prompts we used for generation above were:
 
 <pre>
-8 one seven 1 7 six 6 two 
-1 8 4 six 3 9 8 6 
-five three eight 2 1 9 seven 7 
-two 8 9 three 3 0 3 6 
-two two 7 two 0 three nine nine 
-five six one 1 0 seven six 3 
-0 three 2 one 3 nine six 0 
-2 9 zero 4 7 two 9 eight 
+7 one five seven 1 4 nine two 
+8 2 nine 8 two one nine three 
+0 nine eight 5 6 zero 2 five 
+eight three 2 8 2 two 7 one 
+7 seven 7 0 nine zero seven 3 
+nine nine one 2 six 8 eight three 
+eight 2 5 nine 8 five five nine 
+nine 0 five 3 7 four 8 eight 
 </pre>
--->
