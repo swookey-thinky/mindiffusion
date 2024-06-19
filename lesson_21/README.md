@@ -26,19 +26,17 @@ Generated samples will be saved to `output/dit`.
 
 After training the prior network for 10k steps, the full Dit pipeline is able to generate samples like the below:
 
-<!--
- ![Imagen](https://drive.google.com/uc?export=view&id=1SVWvGD0FhakjL2G9QCyi0TbiaZ_6ILKM)
+ ![DiT](https://drive.google.com/uc?export=view&id=1J6ktzFr7iqgWcf23JpgVaM81Z7sUUcmj)
 
  The prompts we used for generation above were:
 
 <pre>
-8 one seven 1 7 six 6 two 
-1 8 4 six 3 9 8 6 
-five three eight 2 1 9 seven 7 
-two 8 9 three 3 0 3 6 
-two two 7 two 0 three nine nine 
-five six one 1 0 seven six 3 
-0 three 2 one 3 nine six 0 
-2 9 zero 4 7 two 9 eight 
+2 4 one nine 2 eight 7 9 
+two two 2 eight nine 6 nine one 
+nine 4 seven 2 one two four 1 
+eight two two two six six eight nine 
+five 1 seven 0 4 seven four 2 
+one 0 five 9 five 4 5 four 
+1 two five 4 9 0 zero one 
+1 4 eight seven 8 eight zero 8 
 </pre>
--->
