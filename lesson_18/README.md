@@ -34,7 +34,7 @@ Generated samples will be saved to `output/imagen`.
 
 ## Results
 
-After training the prior network for 10k steps, the full Imagen pipeline is able to generate samples like the below:
+After training the network for 10k steps, the full Imagen pipeline is able to generate samples like the below:
 
 ![Imagen](https://drive.google.com/uc?export=view&id=1MKyRgPKoPRFHLzd78aTA1K3QHgNm08Px)
 
