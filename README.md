@@ -1,5 +1,6 @@
 # Zero-to-Hero - Diffusion Models
 ![Zero to Hero](https://drive.google.com/uc?export=view&id=1FfH6643JCYjnCq2JKFPs9wH64W_Rm_B2)
+
 [![python](https://img.shields.io/badge/Python-3.9-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
 [![pytorch](https://img.shields.io/badge/PyTorch-2.0.0-EE4C2C.svg?style=flat&logo=pytorch)](https://pytorch.org)
 
