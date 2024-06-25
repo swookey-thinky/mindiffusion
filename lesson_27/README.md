@@ -45,17 +45,17 @@ Generated samples and model checkpoints will be saved to `output/pixart_alpha`.
 
 After training the prior network for 30k steps, the full PixArt-α pipeline is able to generate samples like the below:
 
- ![DiT](https://drive.google.com/uc?export=view&id=1J6ktzFr7iqgWcf23JpgVaM81Z7sUUcmj)
+![Pixart-Alpha](https://drive.google.com/uc?export=view&id=17hrD-Zxreb7XNpETWE4MdfVeqs1fnQXu)
 
- The prompts we used for generation above were:
+The prompts we used for generation above were:
 
 <pre>
-2 4 one nine 2 eight 7 9 
-two two 2 eight nine 6 nine one 
-nine 4 seven 2 one two four 1 
-eight two two two six six eight nine 
-five 1 seven 0 4 seven four 2 
-one 0 five 9 five 4 5 four 
-1 two five 4 9 0 zero one 
-1 4 eight seven 8 eight zero 8 
+one two 1 2 one five 0 one 
+2 0 5 two four zero eight five 
+eight 0 8 five three nine 2 1 
+0 6 four seven five 1 4 0 
+0 seven four 1 9 zero one three 
+3 nine zero 8 nine two 5 7 
+zero 8 0 2 four 9 6 eight 
+9 4 seven two eight eight one one 
 </pre>
