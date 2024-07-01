@@ -73,4 +73,8 @@ Lesson | Date | Name |Title|Video|Colab|Code
 30 | March 2024 | Stable Diffusion 3 | [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206) | | |
 31 | March 2024 | PixArt-Σ | [PixArt-Σ: Weak-to-Strong Training of Diffusion Transformer for 4K Text-to-Image Generation](https://arxiv.org/abs/2403.04692) | | |
 
+## Resources
 
+Most of the implementations have been consolidated into a single [image diffusion]() repository, which is configurable through YAML files.
+
+If you are interested Video Diffusion Models, take a look through [video diffusion models](https://github.com/swookey-thinky/video_diffusion) where we are adding all of the latest video diffusion model paper implementations, on an equivalent MNIST dataset for video.
