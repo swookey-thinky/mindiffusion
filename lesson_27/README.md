@@ -1,5 +1,8 @@
 # Lesson 27 - PixArt-α: Fast Training of Diffusion Transformer for Photorealistic Text-to-Image Synthesis
 
+[![python](https://img.shields.io/badge/Python-3.9-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
+[![pytorch](https://img.shields.io/badge/PyTorch-2.0.0-EE4C2C.svg?style=flat&logo=pytorch)](https://pytorch.org)
+
 In this lesson we are going to build the PixArt-α diffusion model from [](). PixArt-α extends the DiT diffusion model from [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748) (see [Lesson 21](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_21)) by adding text alignment using cross attention at each transformer block.
 
 PixArt-α proposes a 3-stage pipeline to training their model. The first stage is "Pixel dependency learning", where they train a class conditional model on Imagenet to learn the "pixel dependencies" of the image generation task within the transformer framework. This model serves as the initialized weights for Stage 2.
