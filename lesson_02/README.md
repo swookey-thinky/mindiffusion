@@ -1,4 +1,6 @@
 # Lesson 2 - Diffusion Probabilistic Models
+[![python](https://img.shields.io/badge/Python-3.9-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
+[![pytorch](https://img.shields.io/badge/PyTorch-2.0.0-EE4C2C.svg?style=flat&logo=pytorch)](https://pytorch.org)
 
 In this lesson, we are going to implement the diffusion model presented in the 2015 paper [Deep Unsupervised Learning using Nonequilibrium Thermodynamics
 ](https://arxiv.org/abs/1503.03585), the groundbreaking research paper from Sohl-Dickstein and others. This paper was the first to introduce the concept of a **diffusion model** for use in generative imagery.
