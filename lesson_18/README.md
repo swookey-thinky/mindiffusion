@@ -1,4 +1,4 @@
-# Lesson 17 - Hierarchical Text-Conditional Image Generation with CLIP Latents (DaLL\*E 2)
+# Lesson 18 - Hierarchical Text-Conditional Image Generation with CLIP Latents (DaLL\*E 2)
 
 In this lesson we are going to learn about the DaLL\*E 2 diffusion model from [Hierarchical Text-Conditional Image Generation with CLIP Latents](https://arxiv.org/abs/2204.06125).
 
