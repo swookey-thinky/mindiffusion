@@ -1,4 +1,4 @@
-# Lesson 16 - Progressive Distillation for Fast Sampling of Diffusion Models
+# Lesson 17 - Progressive Distillation for Fast Sampling of Diffusion Models
 
 In this lesson we are going to learn about distilling a diffusion model into a samller number of sampling steps, from the paper [Progressive Distillation for Fast Sampling of Diffusion Models](https://arxiv.org/abs/2202.00512).
 
