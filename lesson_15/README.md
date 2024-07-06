@@ -1,4 +1,4 @@
-# Lesson 14 - Classifier Free Guidance
+# Lesson 15 - Classifier Free Guidance
 
 In this lesson we are going to learn about an alternative to classifier guidance (which we learned about in [Lesson 11 - Guided Diffusion](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_11)) called [Classifier-Free Diffusion Guidance](https://arxiv.org/abs/2207.12598). Classifier-Free Guidance is a technique used in later models like Stable Diffusion to trade-off image diversity with image fidelity. In this lesson, we use it in a class-conditional manner, as was done in the paper. But the technique applies equally for other conditioning mechanisms, like text-to-image.
 
