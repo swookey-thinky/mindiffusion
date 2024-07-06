@@ -1,4 +1,4 @@
-# Lesson 15 - GLIDE: Towards Photorealistic Image Generation and Editing with Text-Guided Diffusion Models
+# Lesson 16 - GLIDE: Towards Photorealistic Image Generation and Editing with Text-Guided Diffusion Models
 
 In this lesson we are going to learn about the GLIDE diffusion model from [GLIDE: Towards Photorealistic Image Generation and Editing with Text-Guided Diffusion Models](https://arxiv.org/abs/2112.10741).
 
