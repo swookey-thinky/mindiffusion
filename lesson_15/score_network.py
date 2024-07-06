@@ -2,27 +2,20 @@
 
 U-Net espilon prediction network from the paper "Denoising Diffusion Probabilistic Models"
 (https://arxiv.org/abs/2006.11239), with Dropout and class conditioning added.
-
-This package adds the score network improvements from GLIDE. Namely, the model is trained
-with classifier free guidance, and it uses a text conditioning scheme very similar to
-Latent Diffusion. The difference is that Latent Diffusion uses a transformer+cross attention
-projection at each UNet layer, while GLIDE uses a single transformer block, and only cross attention
-at each layer.
 """
 
 import torch
 from typing import Any, List, Optional, Union
 
-from attention import MultiHeadCrossAttention
+from attention import MultiHeadSelfAttention
 from layers import (
     Downsample,
     SinusoidalPositionEmbedding,
     ResnetBlockDDPM,
     ResnetBlockBigGAN,
-    TimestepAndConditioningEmbedSequential,
+    TimestepEmbedSequential,
     Upsample,
 )
-from transformer import LayerNorm, Transformer
 from utils import DotConfig
 
 
@@ -52,7 +45,6 @@ class MNistUnet(torch.nn.Module):
         channel_multipliers = config.model.channel_multipliers
         is_v_param = config.model.is_v_param
         dropout = config.model.dropout
-        self._config = config
 
         self._is_class_conditional = config.model.is_class_conditional
         self._num_classes = config.data.num_classes
@@ -73,57 +65,6 @@ class MNistUnet(torch.nn.Module):
             torch.nn.SiLU(),
             torch.nn.Linear(time_emb_dim, time_emb_dim),
         )
-
-        # If we have a context transformer, let's create it here. This is
-        # a GLIDE style transformer for embedding the text context
-        # into both the timestep embedding and the attention layers.
-        if "context_transformer" in config.model:
-            self._context_transformer = Transformer(
-                n_ctx=config.model.text_context_size,
-                width=config.model.context_transformer.width,
-                layers=config.model.context_transformer.num_layers,
-                heads=config.model.context_transformer.num_heads,
-            )
-
-            if config.model.context_transformer.final_layer_norm:
-                self._final_layer_norm = LayerNorm(
-                    normalized_shape=config.model.context_transformer.width
-                )
-            else:
-                self._final_layer_norm = None
-
-            if config.model.context_transformer.padding:
-                self._padding_embedding = torch.nn.Parameter(
-                    torch.empty(
-                        config.model.text_context_size,
-                        config.model.context_transformer.width,
-                        dtype=torch.float32,
-                    )
-                )
-            else:
-                self._padding_embedding = None
-
-                self._token_embedding = torch.nn.Embedding(
-                    config.model.text_vocabulary_size,
-                    config.model.context_transformer.width,
-                )
-                self._positional_embedding = torch.nn.Parameter(
-                    torch.empty(
-                        config.model.text_context_size,
-                        config.model.context_transformer.width,
-                        dtype=torch.float32,
-                    )
-                )
-
-                # Projects the context into the same dimensions as the timestep embedding.
-                self._transformer_proj = torch.nn.Linear(
-                    config.model.context_transformer.width, time_emb_dim
-                )
-
-        else:
-            self._context_transformer = None
-            self._final_layer_norm = None
-            self._padding_embedding = None
 
         if self._is_class_conditional:
             # We add 1 to the number of classes so that we can embed
@@ -171,22 +112,15 @@ class MNistUnet(torch.nn.Module):
                 ch = mult * num_features
                 if ds in attention_ds:
                     layers.append(
-                        MultiHeadCrossAttention(
-                            channels=ch,
-                            encoder_channels=(
-                                config.model.context_transformer.width
-                                if "context_transformer" in config.model
-                                else None
-                            ),
-                            num_heads=config.model.attention_heads,
-                            num_head_channels=config.model.attention_channels,
+                        MultiHeadSelfAttention(
+                            ch, num_heads=config.model.num_attention_heads_downsample
                         )
                     )
-                self.downs.append(TimestepAndConditioningEmbedSequential(*layers))
+                self.downs.append(TimestepEmbedSequential(*layers))
                 input_block_chans.append(ch)
             if level != len(channel_multipliers) - 1:
                 self.downs.append(
-                    TimestepAndConditioningEmbedSequential(
+                    TimestepEmbedSequential(
                         ResnetBlock(
                             dim_in=ch,
                             time_emb_dim=time_emb_dim,
@@ -208,7 +142,7 @@ class MNistUnet(torch.nn.Module):
                 ds *= 2
 
         # Middle layers
-        self.middle = TimestepAndConditioningEmbedSequential(
+        self.middle = TimestepEmbedSequential(
             ResnetBlock(
                 dim_in=ch,
                 dim_out=ch,
@@ -217,15 +151,8 @@ class MNistUnet(torch.nn.Module):
                 use_scale_shift_norm=config.model.use_scale_shift_norm,
                 use_conv=config.model.resamp_with_conv,
             ),
-            MultiHeadCrossAttention(
-                channels=ch,
-                encoder_channels=(
-                    config.model.context_transformer.width
-                    if "context_transformer" in config.model
-                    else None
-                ),
-                num_heads=config.model.attention_heads,
-                num_head_channels=config.model.attention_channels,
+            MultiHeadSelfAttention(
+                ch, num_heads=config.model.num_attention_heads_downsample
             ),
             ResnetBlock(
                 dim_in=ch,
@@ -253,15 +180,8 @@ class MNistUnet(torch.nn.Module):
                 ch = num_features * mult
                 if ds in attention_ds:
                     layers.append(
-                        MultiHeadCrossAttention(
-                            channels=ch,
-                            encoder_channels=(
-                                config.model.context_transformer.width
-                                if "context_transformer" in config.model
-                                else None
-                            ),
-                            num_heads=config.model.attention_heads,
-                            num_head_channels=config.model.attention_channels,
+                        MultiHeadSelfAttention(
+                            ch, num_heads=config.model.num_attention_heads_downsample
                         )
                     )
                 if level and i == config.model.num_resnet_blocks:
@@ -279,7 +199,7 @@ class MNistUnet(torch.nn.Module):
                         else Upsample(ch, config.model.resamp_with_conv, dims=2)
                     )
                     ds //= 2
-                self.ups.append(TimestepAndConditioningEmbedSequential(*layers))
+                self.ups.append(TimestepEmbedSequential(*layers))
 
         # Final projection
         self.final_projection = torch.nn.Sequential(
@@ -299,28 +219,10 @@ class MNistUnet(torch.nn.Module):
         self,
         x,
         t,
-        text_tokens: Optional[torch.Tensor] = None,
         y: Optional[torch.Tensor] = None,
     ) -> Union[torch.Tensor, List[torch.Tensor]]:
-        """Calculate noise parameter.
-
-        Args:
-            x: Tensor batch of noisy input data.
-            t: Tensor batch of timestep indices.
-            y: (Optional) Tensor batch of integer class labels.
-        """
         # Convert the timestep t to an embedding
         timestep_embedding = self.time_proj(t)
-        assert text_tokens is not None
-
-        # Transform the text context if we have it
-        context = None
-        if self._context_transformer is not None:
-            text_outputs = self._get_text_embedding(
-                text_tokens, dtype=timestep_embedding.dtype, mask=None
-            )
-            xf_proj, context = text_outputs["xf_proj"], text_outputs["xf_out"]
-            timestep_embedding = timestep_embedding + xf_proj.to(timestep_embedding)
 
         if self._is_class_conditional:
             assert y is not None and y.shape == (x.shape[0],)
@@ -331,32 +233,15 @@ class MNistUnet(torch.nn.Module):
 
         hs = [h]
         for module in self.downs:
-            h = module(h, time_emb=timestep_embedding, context=context)
+            h = module(h, time_emb=timestep_embedding)
             hs.append(h)
-        h = self.middle(h, time_emb=timestep_embedding, context=context)
+        h = self.middle(h, time_emb=timestep_embedding)
         for module in self.ups:
             cat_in = torch.cat([h, hs.pop()], dim=1)
-            h = module(cat_in, time_emb=timestep_embedding, context=context)
+            h = module(cat_in, time_emb=timestep_embedding)
 
         h = self.final_projection(h)
 
         if self._is_v_param:
             return torch.split(h, self._output_channels, dim=1)
         return h
-
-    def _get_text_embedding(self, tokens, mask, dtype):
-        assert tokens is not None and self._context_transformer is not None
-
-        xf_in = self._token_embedding(tokens.long())
-        xf_in = xf_in + self._positional_embedding[None]
-        if self._config.model.context_transformer.padding:
-            assert mask is not None
-            xf_in = torch.where(mask[..., None], xf_in, self._padding_embedding[None])
-        xf_out = self._context_transformer(xf_in.to(dtype))
-        if self._final_layer_norm is not None:
-            xf_out = self._final_layer_norm(xf_out)
-        xf_proj = self._transformer_proj(xf_out[:, -1])
-        xf_out = xf_out.permute(0, 2, 1)  # NLC -> NCL
-
-        outputs = dict(xf_proj=xf_proj, xf_out=xf_out)
-        return outputs

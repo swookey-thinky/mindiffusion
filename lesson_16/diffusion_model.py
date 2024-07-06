@@ -1,16 +1,30 @@
-"""Lesson 13 - Gaussian Diffusion Model using Latent Diffusion Models.
+"""Lesson 15 - GLIDE: Towards Photorealistic Image Generation and Editing with
+Text-Guided Diffusion Models
 
-This module implements the Latent Gaussian Diffusion model from the High-Resolution Image Synthesis
-with Latent Diffusion Models.
+This package implements the GLIDE diffusion model from "GLIDE: Towards Photorealistic
+Image Generation and Editing with Text-Guided Diffusion Models" (https://arxiv.org/abs/2112.10741).
+The GLIDE diffusion model is very similar to DDPM, which two important improvements. First,
+it uses classifier-free guidance to improve the sampling process (and hence necessarily trains
+a joint text-conditional/unconditional score network) and it uses a cross-attention based
+text conditioning in the score network, similar to Latent Diffusion Models, but with a single
+shared transformer projection across layers, rather than the per-layer transformer projection
+in LDM. GLIDE also experimented with CLIP guidance rather than just classifier-free guidance,
+but found that classifier-free guidanec performed better, so we implement that here.
+
+In this package, we are not training a class-conditional model, so we use classifier-free
+guidance on the text conditioning, an jointly train a text-conditional/unconditional model.
 """
 
 from einops import reduce
 import numpy as np
 import torch
+from torchvision import transforms
 from tqdm import tqdm
 from typing import Callable, Dict, List, Optional, Type
 
+from tokenizer.bpe import get_encoder
 from importance_sampling import ImportanceSampler, UniformSampler
+from score_network import MNistUnet
 from utils import (
     cosine_beta_schedule,
     discretized_gaussian_log_likelihood,
@@ -21,27 +35,28 @@ from utils import (
     unnormalize_to_zero_to_one,
     DotConfig,
 )
-from autoencoders.base import VariationalAutoEncoder
 
 
-class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
-    """Core Latent Diffusion algorithm.
+class GaussianDiffusion_GLIDE(torch.nn.Module):
+    """Core GLIDE Diffusion algorithm, with classifier free guidance.
 
-    This is the same core algorithm as DDPM, IDDPM, and Guided Diffusion.
+    This is the same core algorithm as DDPM, IDDPM, and Guided Diffusion,
+    with a few changes listed above.
     """
 
-    def __init__(
-        self, score_network_type: Type, config: DotConfig, vae: VariationalAutoEncoder
-    ):
+    def __init__(self, config: DotConfig):
         super().__init__()
-        self._score_network = score_network_type(config)
+        self._score_network = MNistUnet(config)
+        self._tokenizer = get_encoder()
         self._num_timesteps = config.model.num_scales
         self._is_v_param = config.model.is_v_param
         self._is_class_conditional = config.model.is_class_conditional
         self._num_classes = config.data.num_classes
-        self._vae = vae
+        self._unconditional_guidance_probability = (
+            config.model.unconditional_guidance_probability
+        )
+        self._classifier_free_guidance = config.model.classifier_free_guidance
         self._config = config
-        self._scale_factor = 1.0
 
         if config.model.is_v_param:
             self._importance_sampler = ImportanceSampler(
@@ -107,7 +122,13 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
         register_buffer("posterior_mean_coef1", posterior_mean_coef1)
         register_buffer("posterior_mean_coef2", posterior_mean_coef2)
 
-    def loss_on_batch(self, images, context, y=None) -> Dict:
+    def loss_on_batch(
+        self,
+        images,
+        prompts: List[str],
+        low_resolution_images: Optional[torch.Tensor] = None,
+        y=None,
+    ) -> Dict:
         """Calculates the reverse process loss on a batch of images.
 
         Args:
@@ -121,18 +142,38 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
         B, _, H, W = images.shape
         device = images.device
 
+        # Convert the prompts into text tokens
+        assert len(prompts) == images.shape[0]
+        tokens = self._tokenizer.tokenize(
+            texts=prompts,
+            context_length=self._config.model.text_context_size,
+            truncate_text=True,
+        ).to(device)
+
         # The images are normalized into the range (-1, 1),
         # from Section 3.3:
         # "We assume that image data consists of integers in {0, 1, . . . , 255} scaled linearly to [−1, 1]."
-        x_0 = self._vae.encode_to_latents(normalize_to_neg_one_to_one(images))
+        x_0 = normalize_to_neg_one_to_one(images)
 
-        if self._scale_factor == -1.0:
-            del self._scale_factor
-            self.register_buffer("_scale_factor", 1.0 / x_0.detach().flatten().std())
-            print(f"Latent scale factor: {self._scale_factor}")
+        if low_resolution_images is not None:
+            low_res_x_0 = normalize_to_neg_one_to_one(
+                transforms.functional.resize(
+                    low_resolution_images,
+                    size=(
+                        self._config.model.input_spatial_size,
+                        self._config.model.input_spatial_size,
+                    ),
+                    antialias=True,
+                )
+            )
 
-        # Scale the latents
-        x_0 = x_0 * self._scale_factor
+            # Apply gaussian conditioning augmentation if configured
+            if self._config.model.gaussian_conditioning_augmentation:
+                # Use non-truncating GCA. First sample s.
+                s = torch.randint(0, self._num_timesteps, (B,), device=device).long()
+                low_res_x_0 = self._q_sample(low_res_x_0, s)
+        else:
+            low_res_x_0 = None
 
         # Line 3, calculate the random timesteps for the training batch.
         # Use importance sampling here if desired.
@@ -145,16 +186,42 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
         # Calculate forward process q_t
         x_t = self._q_sample(x_0=x_0, t=t, noise=epsilon)
 
-        # Add the context to the unet forward pass. In order to maintain our
-        # unconditional generation performance, we will drop the context
-        # 25% of the time. A null conditioning will correspond to a batch of
-        # all zeros.
-        if torch.rand(()) <= 0.25:
-            context = torch.zeros_like(context)
+        # Drop some of the class labels so that we can perform unconditional
+        # guidance.
+        if y is not None:
+            # Make room for the NULL token in the class labels
+            conditional_y = y + 1
+            # Create the NULL tokens
+            unconditional_y = torch.zeros_like(y)
+            # Sample the unconditional tokens
+            unconditional_probability = torch.rand(size=y.shape, device=y.device)
+            y = torch.where(
+                unconditional_probability <= self._unconditional_guidance_probability,
+                unconditional_y,
+                conditional_y,
+            )
+
+        # Drop some of the text tokens so that we can perform classifier-free guidance.
+        conditional_context = tokens
+        unconditional_context = torch.zeros_like(tokens)
+
+        # Sample the unconditional tokens
+        unconditional_probability = torch.rand(size=(tokens.shape[0], 1), device=device)
+        text_tokens = torch.where(
+            unconditional_probability <= self._unconditional_guidance_probability,
+            unconditional_context,
+            conditional_context,
+        )
 
         # Line 5, predict eps_theta given t. Add the two parameters we calculated
         # earlier together, and run the UNet with that input at time t.
-        model_output = self._score_network(x_t, t=t, context=context, y=y)
+        model_output = self._score_network(
+            torch.cat([x_t, low_res_x_0], dim=1) if low_res_x_0 is not None else x_t,
+            t=t,
+            y=y,
+            text_tokens=text_tokens,
+        )
+
         if self._is_v_param:
             # If we are a v-param model, the model is predicting
             # both epsilon, and the re-parameterized estimate of the variance.
@@ -179,7 +246,7 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
                 x_0=x_0,
                 x_t=x_t,
                 t=t,
-                context=context,
+                low_res_context=low_res_x_0,
                 y=y,
                 clip_denoised=False,
             )
@@ -202,25 +269,64 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
 
     def sample(
         self,
+        prompts: List[str],
+        low_res_context: Optional[torch.Tensor] = None,
         num_samples: int = 16,
-        context: Optional[torch.Tensor] = None,
         guidance_fn: Optional[Callable] = None,
         classes: Optional[torch.Tensor] = None,
+        classifier_free_guidance: Optional[float] = None,
     ):
         """Unconditionally/conditionally sample from the diffusion model."""
         # The output shape of the data.
         shape = (
             num_samples,
-            self._config.model.latent_channels,
-            self._config.model.latent_size,
-            self._config.model.latent_size,
+            self._config.model.output_channels,
+            self._config.model.input_spatial_size,
+            self._config.model.input_spatial_size,
         )
+        device = next(self.parameters()).device
         self.eval()
-        self._vae.eval()
+
+        # Convert the prompts into text tokens
+        assert len(prompts) == num_samples
+        tokens = self._tokenizer.tokenize(
+            texts=prompts,
+            context_length=self._config.model.text_context_size,
+            truncate_text=True,
+        ).to(device)
 
         # Generate latent samples
+        # The additional context is the low resolution images
+        if low_res_context is not None:
+            low_res_x_0 = normalize_to_neg_one_to_one(
+                transforms.functional.resize(
+                    low_res_context,
+                    size=(
+                        self._config.model.input_spatial_size,
+                        self._config.model.input_spatial_size,
+                    ),
+                    antialias=True,
+                )
+            )
+
+            # Apply gaussian conditioning augmentation if configured
+            if self._config.model.gaussian_conditioning_augmentation:
+                # Use non-truncating GCA. First sample s.
+                s = torch.randint(
+                    0, self._num_timesteps, (num_samples,), device=device
+                ).long()
+                low_res_x_0 = self._q_sample(low_res_x_0, s)
+
+        else:
+            low_res_x_0 = None
+
         latent_samples = self._p_sample_loop(
-            shape, guidance_fn, context=context, classes=classes
+            shape,
+            tokens,
+            low_res_x_0,
+            guidance_fn,
+            classes=classes,
+            classifier_free_guidance=classifier_free_guidance,
         )
 
         if self._is_class_conditional:
@@ -229,8 +335,7 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
             latents = latent_samples
 
         # Decode the samples from the latent space
-        samples = self._vae.decode_from_latents(latents / self._scale_factor)
-        samples = unnormalize_to_zero_to_one(samples)
+        samples = unnormalize_to_zero_to_one(latents)
         self.train()
         return samples
 
@@ -313,42 +418,30 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
         )
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
 
-    def _p_mean_variance(
+    def _pred_epsilon(
         self,
         x,
         t,
-        context,
-        clip_denoised=True,
+        context: torch.Tensor,
+        low_res_context: Optional[torch.Tensor],
         epsilon_v_param: Optional[List[torch.Tensor]] = None,
         y=None,
     ):
-        """Calculates the mean and the variance of the reverse process distribution.
-
-        Applies the model to get $p(x_{t-1} | x_t)$, an estimate of the reverse
-        diffusion process.
-
-        Args:
-            x: Tensor batch of the distribution at time t.
-            t: Tensor batch of timesteps.
-            clip_denoised: if True, clip the denoised signal into [-1, 1].
-            epsilon_v_param: If not None, a tensor batch of the model output at t.
-                Used to freeze the epsilon path to prevent gradients flowing back during
-                VLB loss calculation.
-
-        Returns:
-            A tuple of the following values:
-                mean: Tensor batch of the reverse distribution mean.
-                variance: Tensor batch of the reverse distribution variance.
-                log_variance: Tensor batch of the log of the reverse distribution variance.
-        """
-        B, C = x.shape[:2]
-        assert t.shape == (B,)
-
         model_output = (
-            self._score_network(x, t=t, context=context, y=y)
+            self._score_network(
+                (
+                    torch.cat([x, low_res_context], dim=1)
+                    if low_res_context is not None
+                    else x
+                ),
+                t=t,
+                y=y,
+                text_tokens=context,
+            )
             if epsilon_v_param is None
             else epsilon_v_param
         )
+
         if self._is_v_param:
             # The v_param model calculates both the reparameterized
             # mean and variance of the distribution.
@@ -378,6 +471,82 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
 
             variance = extract(variance, t, x.shape)
             log_variance = extract(log_variance, t, x.shape)
+        return epsilon_theta, variance, log_variance
+
+    def _p_mean_variance(
+        self,
+        x,
+        t,
+        context: torch.Tensor,
+        low_res_context: Optional[torch.Tensor],
+        clip_denoised=True,
+        epsilon_v_param: Optional[List[torch.Tensor]] = None,
+        y=None,
+        classifier_free_guidance: Optional[float] = None,
+    ):
+        """Calculates the mean and the variance of the reverse process distribution.
+
+        Applies the model to get $p(x_{t-1} | x_t)$, an estimate of the reverse
+        diffusion process.
+
+        Args:
+            x: Tensor batch of the distribution at time t.
+            t: Tensor batch of timesteps.
+            clip_denoised: if True, clip the denoised signal into [-1, 1].
+            epsilon_v_param: If not None, a tensor batch of the model output at t.
+                Used to freeze the epsilon path to prevent gradients flowing back during
+                VLB loss calculation.
+
+        Returns:
+            A tuple of the following values:
+                mean: Tensor batch of the reverse distribution mean.
+                variance: Tensor batch of the reverse distribution variance.
+                log_variance: Tensor batch of the log of the reverse distribution variance.
+        """
+        B, C = x.shape[:2]
+        assert t.shape == (B,)
+
+        epsilon_theta, variance, log_variance = self._pred_epsilon(
+            x=x,
+            t=t,
+            context=context,
+            low_res_context=low_res_context,
+            epsilon_v_param=epsilon_v_param,
+            y=y,
+        )
+
+        # If we are using classifier free guidance, then calculate the unconditional
+        # epsilon as well.
+        cfg = (
+            classifier_free_guidance
+            if classifier_free_guidance is not None
+            else self._classifier_free_guidance
+        )
+
+        if cfg >= 0.0:
+            assert context is not None
+
+            # Unconditionally sample the model
+            uncond_epsilon_theta, uncond_variance, uncond_log_variance = (
+                self._pred_epsilon(
+                    x=x,
+                    t=t,
+                    context=torch.zeros_like(context),
+                    low_res_context=low_res_context,
+                    epsilon_v_param=epsilon_v_param,
+                )
+            )
+            w = cfg
+            epsilon_theta = uncond_epsilon_theta + w * (
+                epsilon_theta - uncond_epsilon_theta
+            )
+
+            # It's not clear from the paper how to guide v-param models, but we will treat
+            # them the same as the epsilon-param models
+            variance = uncond_variance + w * (variance - uncond_variance)
+            log_variance = uncond_log_variance + w * (
+                log_variance - uncond_log_variance
+            )
 
         _maybe_clip = lambda x_: (torch.clamp(x_, -1.0, 1.0) if clip_denoised else x_)
 
@@ -391,7 +560,15 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
         model_mean, _, _ = self._q_posterior_mean_variance(x_0=pred_xstart, x_t=x, t=t)
         return model_mean, variance, log_variance
 
-    def _p_sample_loop(self, shape, guidance_fn=None, context=None, classes=None):
+    def _p_sample_loop(
+        self,
+        shape,
+        tokens: torch.Tensor,
+        low_res_context: Optional[torch.Tensor],
+        guidance_fn=None,
+        classes=None,
+        classifier_free_guidance: Optional[float] = None,
+    ):
         """Defines Algorithm 2 sampling using notation from DDPM implementation.
 
         Iteratively denoises (reverse diffusion) the probability density function p(x).
@@ -417,13 +594,14 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
         y = None
         if self._is_class_conditional:
             if classes is None:
-                classes = torch.randint(
-                    low=0,
-                    high=self._num_classes,
-                    size=(x_t.shape[0],),
-                    device=device,
+                # Use the NULL token for unconditional generation
+                classes = torch.zeros(
+                    size=(x_t.shape[0],), device=device, dtype=torch.int32
                 )
-            y = classes
+                y = classes
+            else:
+                # Make room for the NULL token
+                y = classes + 1
 
         for t in tqdm(
             reversed(range(0, self._num_timesteps)),
@@ -433,7 +611,13 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
         ):
             t = torch.tensor([t] * shape[0], device=device)
             x_t_minus_1 = self._p_sample(
-                x_t, t=t, context=context, y=y, guidance_fn=guidance_fn
+                x_t,
+                t=t,
+                context=tokens,
+                low_res_context=low_res_context,
+                y=y,
+                guidance_fn=guidance_fn,
+                classifier_free_guidance=classifier_free_guidance,
             )
             x_t = x_t_minus_1
 
@@ -441,7 +625,16 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
             return x_t, classes
         return x_t
 
-    def _p_sample(self, x, t, context, y, guidance_fn=None):
+    def _p_sample(
+        self,
+        x,
+        t,
+        context: torch.Tensor,
+        low_res_context: Optional[torch.Tensor],
+        y,
+        guidance_fn=None,
+        classifier_free_guidance: Optional[float] = None,
+    ):
         """Reverse process single step.
 
         Samples x_{t-1} given x_t - the joint distribution p_theta(x_{t-1}|x_t).
@@ -462,7 +655,13 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
 
         with torch.no_grad():
             model_mean, model_variance, model_log_variance = self._p_mean_variance(
-                x=x, t=t, context=context, clip_denoised=True, y=y
+                x=x,
+                t=t,
+                context=context,
+                low_res_context=low_res_context,
+                clip_denoised=True,
+                y=y,
+                classifier_free_guidance=classifier_free_guidance,
             )
 
         # No noise if t = 0
@@ -502,7 +701,7 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
         x_0,
         x_t,
         t,
-        context,
+        low_res_context: Optional[torch.Tensor],
         y,
         clip_denoised=True,
         epsilon_v_param: Optional[List[torch.Tensor]] = None,
@@ -530,7 +729,7 @@ class GaussianDiffusion_LatentDiffusion(torch.nn.Module):
         mean, _, log_variance = self._p_mean_variance(
             x_t,
             t,
-            context=context,
+            low_res_context,
             clip_denoised=clip_denoised,
             epsilon_v_param=epsilon_v_param,
             y=y,

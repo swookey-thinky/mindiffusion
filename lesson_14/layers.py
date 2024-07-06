@@ -50,17 +50,19 @@ class ConditioningBlock(torch.nn.Module):
         """Apply the module to `x` given `context` conditioning."""
 
 
-class TimestepEmbedSequential(torch.nn.Sequential):
+class TimestepAndConditioningEmbedSequential(torch.nn.Sequential):
     """Sequential module for timestep and conditional embeddings.
 
     A sequential module that passes timestep embeddings to the children that
     support it as an extra input.
     """
 
-    def forward(self, x, time_emb):
+    def forward(self, x, context, time_emb):
         for layer in self:
             if isinstance(layer, TimestepBlock):
                 x = layer(x, time_emb)
+            elif isinstance(layer, ConditioningBlock):
+                x = layer(x, context)
             else:
                 x = layer(x)
         return x

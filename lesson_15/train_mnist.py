@@ -1,4 +1,4 @@
-"""Lesson 12 - Cascaded Diffusion Model."""
+"""Lesson 14 - Classifier Free Guidance."""
 
 from accelerate import Accelerator, DataLoaderConfiguration
 import argparse
@@ -11,15 +11,14 @@ from torchinfo import summary
 from torchvision import transforms, utils
 from torchvision.datasets import MNIST
 from tqdm import tqdm
-from typing import List
 
 from utils import cycle, load_yaml, DotConfig
-from diffusion_model import GaussianDiffusion_GLIDE
+from diffusion_model import GaussianDiffusion_DDPM
 
 OUTPUT_NAME = "output"
 
 
-def run_lesson_15(
+def run_lesson_12(
     num_training_steps: int,
     batch_size: int,
     config_path: str,
@@ -54,7 +53,7 @@ def run_lesson_15(
 
     # Create the diffusion model we are going to train, with a UNet
     # specifically for the MNIST dataset.
-    diffusion_model = GaussianDiffusion_GLIDE(config=config)
+    diffusion_model = GaussianDiffusion_DDPM(config=config)
     summary(
         diffusion_model._score_network,
         [
@@ -65,8 +64,9 @@ def run_lesson_15(
                 config.model.input_spatial_size,
             ),
             (128,),
-            (128, config.model.text_context_size),
+            (128,),
         ],
+        dtypes=[torch.float32, torch.float32, torch.int32],
     )
 
     # The accelerate library will handle of the GPU device management for us.
@@ -113,11 +113,8 @@ def run_lesson_15(
             # and convert them into a fixed embedding space.
             images, classes = next(dataloader)
 
-            # Convert the labels to prompts
-            prompts = convert_labels_to_prompts(classes)
-
             # Calculate the loss on the batch of training data.
-            loss_dict = diffusion_model.loss_on_batch(images, prompts=prompts)
+            loss_dict = diffusion_model.loss_on_batch(images, y=classes)
             loss = loss_dict["loss"]
 
             # Calculate the gradients at each step in the network.
@@ -173,7 +170,7 @@ def run_lesson_15(
 
 
 def sample(
-    diffusion_model: GaussianDiffusion_GLIDE,
+    diffusion_model: GaussianDiffusion_DDPM,
     step,
     config: DotConfig,
     num_samples=64,
@@ -184,27 +181,28 @@ def sample(
     classes = torch.randint(
         0, config.data.num_classes, size=(num_samples,), device=device
     )
-    prompts = convert_labels_to_prompts(classes)
-    output = diffusion_model.sample(num_samples=num_samples, prompts=prompts)
 
-    if diffusion_model._is_class_conditional:
+    for cfg in [1.0, 2.0, 4.0, 7.0, 10.0, 20.0]:
+        output = diffusion_model.sample(
+            num_samples=num_samples, classes=classes, classifier_free_guidance=cfg
+        )
+
         samples, labels = output
-    else:
-        samples = output
-        labels = None
 
-    # Save the samples into an image grid
-    utils.save_image(
-        samples,
-        str(f"{OUTPUT_NAME}/sample-{step}.png"),
-        nrow=int(math.sqrt(num_samples)),
-    )
+        # Save the samples into an image grid
+        utils.save_image(
+            samples,
+            str(f"{OUTPUT_NAME}/sample-{step}-cfg-{cfg}.png"),
+            nrow=int(math.sqrt(num_samples)),
+        )
 
-    with open(f"{OUTPUT_NAME}/sample-{step}.txt", "w") as fp:
-        for i in range(num_samples):
-            if i != 0 and (i % math.sqrt(num_samples)) == 0:
-                fp.write("\n")
-            fp.write(f"{prompts[i]} ")
+    # Save the labels if we have them
+    if labels is not None:
+        with open(f"{OUTPUT_NAME}/sample-{step}.txt", "w") as fp:
+            for i in range(num_samples):
+                if i != 0 and (i % math.sqrt(num_samples)) == 0:
+                    fp.write("\n")
+                fp.write(f"{labels[i]} ")
 
 
 def save(diffusion_model, step, loss, optimizer):
@@ -216,38 +214,8 @@ def save(diffusion_model, step, loss, optimizer):
             "optimizer_state_dict": optimizer.state_dict(),
             "loss": loss,
         },
-        f"{OUTPUT_NAME}/glide-{step}.pt",
+        f"{OUTPUT_NAME}/classifier_free_guidance-{step}.pt",
     )
-
-
-def convert_labels_to_prompts(labels: torch.Tensor) -> List[str]:
-    """Converts MNIST class labels to text prompts.
-
-    Supports both the strings "0" and "zero" to describe the
-    class labels.
-    """
-    # The conditioning we pass to the model will be a vectorized-form of
-    # MNIST classes. Since we have a fixed number of classes, we can create
-    # a hard-coded "embedding" of the MNIST class label.
-    text_labels = [
-        ("zero", "0"),
-        ("one", "1"),
-        ("two", "2"),
-        ("three", "3"),
-        ("four", "4"),
-        ("five", "5"),
-        ("six", "6"),
-        ("seven", "7"),
-        ("eight", "8"),
-        ("nine", "9"),
-    ]
-
-    # First convert the labels into a list of string prompts
-    prompts = [
-        text_labels[labels[i]][torch.randint(0, len(text_labels[labels[i]]), size=())]
-        for i in range(labels.shape[0])
-    ]
-    return prompts
 
 
 def main(override=None):
@@ -257,11 +225,11 @@ def main(override=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_training_steps", type=int, default=10000)
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--config_path", type=str, default="configs/mnist_glide.yaml")
+    parser.add_argument("--config_path", type=str, default="configs/mnist_cfg.yaml")
 
     args = parser.parse_args()
 
-    run_lesson_15(
+    run_lesson_12(
         num_training_steps=args.num_training_steps,
         batch_size=args.batch_size,
         config_path=args.config_path,

@@ -1,7 +1,6 @@
-"""Lesson 14 - Classifier Free Guidance."""
-
 from accelerate import Accelerator, DataLoaderConfiguration
 import argparse
+from functools import partial
 import math
 import os
 import torch
@@ -12,15 +11,18 @@ from torchvision import transforms, utils
 from torchvision.datasets import MNIST
 from tqdm import tqdm
 
-from utils import cycle, load_yaml, DotConfig
-from diffusion_model import GaussianDiffusion_DDPM
+from utils import cycle, freeze, get_obj_from_str, load_yaml, DotConfig
+from text_encoder import FrozenCLIPEmbedder
+from diffusion_model import GaussianDiffusion_LatentDiffusion
+from score_network import MNistUnet
 
 OUTPUT_NAME = "output"
 
 
-def run_lesson_12(
+def run_lesson_11(
     num_training_steps: int,
     batch_size: int,
+    autoencoder_checkpoint: str,
     config_path: str,
 ):
     # Ensure the output directories exist
@@ -51,22 +53,37 @@ def run_lesson_12(
     # Open the model configuration
     config = load_yaml(config_path)
 
+    # Context dimension - the dimension of the context conditioning that
+    # is passed to the model. During runtime, we project the embedding dimension
+    # to the context dimension before passing to the model.
+    text_encoder_max_length = 77
+
+    # Create and load the VAE
+    vae = get_obj_from_str(config.model.vae.target)(config.model.vae.params)
+    checkpoint = torch.load(autoencoder_checkpoint, map_location="cpu")
+    vae.load_state_dict(checkpoint["model_state_dict"])
+
+    # Freeze the VAE so that we are not updating its weights.
+    vae = freeze(vae)
+
     # Create the diffusion model we are going to train, with a UNet
     # specifically for the MNIST dataset.
-    diffusion_model = GaussianDiffusion_DDPM(config=config)
+    diffusion_model = GaussianDiffusion_LatentDiffusion(
+        score_network_type=MNistUnet, config=config, vae=vae
+    )
+    # The text encoder generates embeddings of size (B, text_encoder_max_length, context_dimension)
     summary(
         diffusion_model._score_network,
         [
             (
                 128,
-                config.model.input_channels,
-                config.model.input_spatial_size,
-                config.model.input_spatial_size,
+                config.model.latent_channels,
+                config.model.latent_size,
+                config.model.latent_size,
             ),
             (128,),
-            (128,),
+            (128, text_encoder_max_length, config.model.context_size),
         ],
-        dtypes=[torch.float32, torch.float32, torch.int32],
     )
 
     # The accelerate library will handle of the GPU device management for us.
@@ -106,15 +123,19 @@ def run_lesson_12(
     average_loss = 0.0
     average_loss_cumulative = 0.0
 
+    text_encoder = FrozenCLIPEmbedder(max_length=text_encoder_max_length).to(device)
     with tqdm(initial=step, total=num_training_steps) as progress_bar:
         # Perform gradient descent for the given number of training steps.
         while step < num_training_steps:
             # The dataset has images and classes. Let's use the classes,
             # and convert them into a fixed embedding space.
-            images, classes = next(dataloader)
+            images, labels = next(dataloader)
+
+            # Convert the class labels into text embeddings.
+            context = convert_labels_to_embeddings(labels, text_encoder)
 
             # Calculate the loss on the batch of training data.
-            loss_dict = diffusion_model.loss_on_batch(images, y=classes)
+            loss_dict = diffusion_model.loss_on_batch(images, context)
             loss = loss_dict["loss"]
 
             # Calculate the gradients at each step in the network.
@@ -125,10 +146,7 @@ def run_lesson_12(
             accelerator.wait_for_everyone()
 
             # Clip the gradients.
-            accelerator.clip_grad_norm_(
-                diffusion_model.parameters(),
-                max_grad_norm,
-            )
+            accelerator.clip_grad_norm_(diffusion_model.parameters(), max_grad_norm)
 
             # Perform the gradient descent step using the optimizer.
             optimizer.step()
@@ -147,8 +165,17 @@ def run_lesson_12(
             if step % save_and_sample_every_n == 0:
                 sample(
                     diffusion_model=diffusion_model,
+                    text_encoder=text_encoder,
                     step=step,
                     config=config,
+                    conditional=False,
+                )
+                sample(
+                    diffusion_model=diffusion_model,
+                    text_encoder=text_encoder,
+                    step=step,
+                    config=config,
+                    conditional=True,
                 )
                 save(diffusion_model, step, loss, optimizer)
                 average_loss = average_loss_cumulative / float(save_and_sample_every_n)
@@ -163,46 +190,88 @@ def run_lesson_12(
     # Save and sample the final step.
     sample(
         diffusion_model=diffusion_model,
+        text_encoder=text_encoder,
         step=step,
         config=config,
+        conditional=False,
+    )
+    sample(
+        diffusion_model=diffusion_model,
+        text_encoder=text_encoder,
+        step=step,
+        config=config,
+        conditional=True,
     )
     save(diffusion_model, step, loss, optimizer)
 
 
 def sample(
-    diffusion_model: GaussianDiffusion_DDPM,
+    diffusion_model: GaussianDiffusion_LatentDiffusion,
+    text_encoder,
     step,
     config: DotConfig,
-    num_samples=64,
+    conditional: bool = False,
 ):
+    num_samples = 64
     device = next(diffusion_model.parameters()).device
 
-    # Sample from the model to check the quality.
-    classes = torch.randint(
-        0, config.data.num_classes, size=(num_samples,), device=device
+    if conditional:
+        labels = torch.randint(low=0, high=10, size=(num_samples,), device=device)
+        conditional_embeddings, prompts = convert_labels_to_embeddings(
+            labels,
+            text_encoder,
+            return_prompts=True,
+        )
+        context = conditional_embeddings.to(device)
+    else:
+        context = torch.zeros(
+            (num_samples, config.model.context_size),
+            dtype=torch.float32,
+            device=device,
+        )
+        labels = None
+        prompts = None
+    # Sample from the model to check the quality
+    output = diffusion_model.sample(
+        num_samples=num_samples,
+        context=context,
     )
 
-    for cfg in [1.0, 2.0, 4.0, 7.0, 10.0, 20.0]:
-        output = diffusion_model.sample(
-            num_samples=num_samples, classes=classes, classifier_free_guidance=cfg
-        )
-
+    if diffusion_model._is_class_conditional:
         samples, labels = output
+    else:
+        samples = output
+        labels = None
 
-        # Save the samples into an image grid
-        utils.save_image(
-            samples,
-            str(f"{OUTPUT_NAME}/sample-{step}-cfg-{cfg}.png"),
-            nrow=int(math.sqrt(num_samples)),
-        )
+    # Save the samples into an image grid
+    utils.save_image(
+        samples,
+        str(
+            f"{OUTPUT_NAME}/{'conditional' if conditional else 'unconditional'}_sample-{step}.png"
+        ),
+        nrow=int(math.sqrt(num_samples)),
+    )
 
     # Save the labels if we have them
     if labels is not None:
-        with open(f"{OUTPUT_NAME}/sample-{step}.txt", "w") as fp:
+        with open(
+            f"{OUTPUT_NAME}/{'conditional' if conditional else 'unconditional'}_sample-{step}.txt",
+            "w",
+        ) as fp:
             for i in range(num_samples):
                 if i != 0 and (i % math.sqrt(num_samples)) == 0:
                     fp.write("\n")
                 fp.write(f"{labels[i]} ")
+
+    if prompts is not None:
+        with open(
+            f"{OUTPUT_NAME}/{'conditional' if conditional else 'unconditional'}_sample-{step}_prompts.txt",
+            "w",
+        ) as fp:
+            for i in range(num_samples):
+                if i != 0 and (i % math.sqrt(num_samples)) == 0:
+                    fp.write("\n")
+                fp.write(f"{prompts[i]} ")
 
 
 def save(diffusion_model, step, loss, optimizer):
@@ -214,8 +283,48 @@ def save(diffusion_model, step, loss, optimizer):
             "optimizer_state_dict": optimizer.state_dict(),
             "loss": loss,
         },
-        f"{OUTPUT_NAME}/classifier_free_guidance-{step}.pt",
+        f"{OUTPUT_NAME}/latent_diffusion-{step}.pt",
     )
+
+
+def convert_labels_to_embeddings(
+    labels: torch.Tensor, text_encoder: torch.nn.Module, return_prompts: bool = False
+) -> torch.Tensor:
+    """Converts MNIST class labels to embeddings.
+
+    Supports both the strings "0" and "zero" to describe the
+    class labels.
+    """
+    # The conditioning we pass to the model will be a vectorized-form of
+    # MNIST classes. Since we have a fixed number of classes, we can create
+    # a hard-coded "embedding" of the MNIST class label.
+    text_labels = [
+        ("zero", "0"),
+        ("one", "1"),
+        ("two", "2"),
+        ("three", "3"),
+        ("four", "4"),
+        ("five", "5"),
+        ("six", "6"),
+        ("seven", "7"),
+        ("eight", "8"),
+        ("nine", "9"),
+    ]
+
+    # First convert the labels into a list of string prompts
+    prompts = [
+        text_labels[labels[i]][torch.randint(0, len(text_labels[labels[i]]), size=())]
+        for i in range(labels.shape[0])
+    ]
+
+    # Convert the prompts into context embeddings. Use the text encoder
+    # we created earlier to convert the text labels in vector tensors.
+    text_embeddings = text_encoder.encode(prompts)
+
+    if return_prompts:
+        return text_embeddings, prompts
+    else:
+        return text_embeddings
 
 
 def main(override=None):
@@ -225,14 +334,16 @@ def main(override=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_training_steps", type=int, default=10000)
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--config_path", type=str, default="configs/mnist_cfg.yaml")
+    parser.add_argument("--config_path", type=str, default="configs/mnist_ldm.yaml")
+    parser.add_argument("--autoencoder_checkpoint", type=str, required=True)
 
     args = parser.parse_args()
 
-    run_lesson_12(
+    run_lesson_11(
         num_training_steps=args.num_training_steps,
         batch_size=args.batch_size,
         config_path=args.config_path,
+        autoencoder_checkpoint=args.autoencoder_checkpoint,
     )
 
 

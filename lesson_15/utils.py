@@ -24,13 +24,6 @@ class DotConfig:
     def __getitem__(self, k) -> Any:
         return self.__getattr__(k)
 
-    def __contains__(self, k) -> bool:
-        try:
-            v = self._cfg[k]
-            return True
-        except KeyError:
-            return False
-
 
 def load_yaml(yaml_path: str) -> DotConfig:
     """Loads a YAML configuration file."""

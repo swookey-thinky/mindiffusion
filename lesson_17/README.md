@@ -1,10 +1,12 @@
-# Lesson 17 - Hierarchical Text-Conditional Image Generation with CLIP Latents (DaLL\*E 2)
+# Lesson 16 - Progressive Distillation for Fast Sampling of Diffusion Models
 
-In this lesson we are going to learn about the DaLL\*E 2 diffusion model from [Hierarchical Text-Conditional Image Generation with CLIP Latents](https://arxiv.org/abs/2204.06125).
+In this lesson we are going to learn about distilling a diffusion model into a samller number of sampling steps, from the paper [Progressive Distillation for Fast Sampling of Diffusion Models](https://arxiv.org/abs/2202.00512).
 
-DaLL\*E 2 is an interesting follow on to the original DaLL\*E text-to-image model, which as you recall from [Lesson 8](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_08) was actually a non-diffusion, transformer based text-to-image generation model. In contrast, DaLL\*E 2 is a multi-stage diffusion model whose main contribution is using [CLIP](https://arxiv.org/abs/2103.0002) image embeddings as a source of conditioning in the diffusion process. In order to accomplish this, DaLL\*E 2 first introduces a diffusion prior networkm which learns to predict the CLIP image embeddings from the CLIP text embeddings of the generation prompts. Then, DaLL\*E 2 uses a diffusion decoder network to predict a generated image conditioned on the CLIP image embeddings from the prior network, and text embeddings from the given prompts.
+This paper is very cool because you can take a pretrained diffusion model, that required N steps of sampling, and distill it into another, same sized diffusion model that only takes M steps of sampling, where M << N. For example, in the steps below, we take a diffusion model that originally required 1024 sampling steps and distill it into one that only requires 8 sampling steps, at a similar quality level as the original umber of steps!
 
-The authors did not release any code for their model. However Phil Wang has an implementation at [DaLL\*E 2 PyTorch](https://github.com/lucidrains/DALLE2-pytorch) that you can use to follow along if you want.
+Another innovation from this paper was a new parameterization of the score network, called the *v-parameterization*, which is used pretty extensively in most modern models.
+
+The authors released their original JAX source code at [Diffusion Distillation](https://github.com/google-research/google-research/tree/master/diffusion_distillation) that you can use to follow along if you want.
 
 In this repository, we will be working with the [MNIST](https://en.wikipedia.org/wiki/MNIST_database) dataset because it is simple and can be trained in real time with minimal GPU power and memory. The main difference between MNIST and other datasets is the single channel of the imagery, versus 3 channels in most other datasets. We will make sure that the models we build can easily accomodate 1- or 3-channel data, so that you can test the models we build on other datasets.
 
@@ -14,47 +16,27 @@ Follow the instructions from [Requirements For All Lessons](https://github.com/s
 
 ## Running the Lesson
 
-DaLL\*E 2 training involves 3 steps:
-
-1.) Train a CLIP model to generate image and text embeddings
-2.) Train the prior network to generate image embeddings given text embeddings
-3.) Train the decoder network to generate images from predicted image embeddings.
-
-For step 1.), we use a pretrained CLIP model from OpenAI. To train the prior network, use:
+First, we need a pretrained diffusion model that we are going to distill. To train a standard DDPM, v-parameterized, continuous time formulation diffusion model, use:
 
 ```
-> python train_prior_mnist.py
+> python train.py --config_path configs/ddpm_32x32_v_continuous.yaml
 ```
 
-This will generate model checkpoints in the `output/prior` directory. To train the decoder network, run:
+This will generate model checkpoints in the `output/ddpm_32x32_v_continuous` directory.
+
+Next, we want to distill that model into a smaller number of steps. We will distill it for 7 iterations, taking it from 1024 sampling steps down to 8.
 
 ```
-> python train_decoder_mnist.py
+> python distill.py --config_path configs/ddpm_32x32_v_continuous.yaml --teacher_model_checkpoint output/ddpm_32x32_v_continuous/diffusion-10000.pt --initial_sampling_steps 512 --distillation_iterations 7
 ```
 
-This will save the decoder model checkpoints into `output/decoder`. In order to sample from the full pipeline (`text prompts -> image embeddings -> images`), you can run:
-
-```
-> python sample_dalle2.py --diffusion_prior <path to prior checkpoint> --diffusion_decoder <path to decoder checkpoint>
-```
-Generated samples will be saved to `output/samples_dalle2`.
+Generated samples will be saved to `output/distilled`.
 
 ## Results
 
-After training the prior network for 30k steps and the decoder network for 14k steps, the full DaLL\*E 2 pipeline is able to generate samples like the below:
+After training the initial model for 10k steps, and each distillation iteration for 5k steps, the model generates the following output:
 
-![DaLL\*E 2](https://drive.google.com/uc?export=view&id=1SVWvGD0FhakjL2G9QCyi0TbiaZ_6ILKM)
-
-The prompts we used for generation above were:
-
-<pre>
-8 one seven 1 7 six 6 two 
-1 8 4 six 3 9 8 6 
-five three eight 2 1 9 seven 7 
-two 8 9 three 3 0 3 6 
-two two 7 two 0 three nine nine 
-five six one 1 0 seven six 3 
-0 three 2 one 3 nine six 0 
-2 9 zero 4 7 two 9 eight 
-</pre>
+| Original Model (1024 steps) | Original Model (8 Steps) | Distilled Model (8 steps)
+| ---- | ---- | ----
+| ![Original 1024](https://drive.google.com/uc?export=view&id=1FRaNRkEyg0xMvn0dH6MW5PcXCj3BTj-k) | ![Original 8](https://drive.google.com/uc?export=view&id=1hLpFWceM_7ni5s1sdKSsms20W9uHXhog) | ![Distilled 8](https://drive.google.com/uc?export=view&id=1UVcvEptEg8D7pPp_2HWm3bizAajAvYIY)
 

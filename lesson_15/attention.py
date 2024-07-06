@@ -7,10 +7,10 @@ from einops import rearrange
 import math
 import torch
 
-from layers import conv_nd, zero_module, ConditioningBlock
+from layers import conv_nd, zero_module
 
 
-class CrossAttention(ConditioningBlock):
+class CrossAttention(torch.nn.Module):
     """Multi-Head Cross-Attention.
 
     When the context is None, this is equivalent to Multi-Head Self Attention.
@@ -119,50 +119,6 @@ class MultiHeadSelfAttention(torch.nn.Module):
         return (x + h).reshape(b, c, *spatial)
 
 
-class MultiHeadCrossAttention(ConditioningBlock):
-    """
-    An attention block that allows spatial positions to attend to each other.
-
-    Originally ported from here, but adapted to the N-d case.
-    https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/models/unet.py#L66.
-    """
-
-    def __init__(
-        self,
-        channels,
-        num_heads=1,
-        num_head_channels=-1,
-        encoder_channels=None,
-    ):
-        super().__init__()
-        self.channels = channels
-        if num_head_channels == -1:
-            self.num_heads = num_heads
-        else:
-            assert (
-                channels % num_head_channels == 0
-            ), f"q,k,v channels {channels} is not divisible by num_head_channels {num_head_channels}"
-            self.num_heads = channels // num_head_channels
-        self.norm = torch.nn.GroupNorm(num_groups=32, num_channels=channels)
-        self.qkv = conv_nd(1, channels, channels * 3, 1)
-        self.attention = QKVAttention(self.num_heads)
-
-        if encoder_channels is not None:
-            self.encoder_kv = conv_nd(1, encoder_channels, channels * 2, 1)
-        self.proj_out = zero_module(conv_nd(1, channels, channels, 1))
-
-    def forward(self, x, context=None):
-        b, c, *spatial = x.shape
-        qkv = self.qkv(self.norm(x).view(b, c, -1))
-        if context is not None:
-            encoder_out = self.encoder_kv(context)
-            h = self.attention(qkv, encoder_out)
-        else:
-            h = self.attention(qkv)
-        h = self.proj_out(h)
-        return x + h.reshape(b, c, *spatial)
-
-
 class QKVAttention(torch.nn.Module):
     """A module which performs QKV attention."""
 
@@ -170,7 +126,7 @@ class QKVAttention(torch.nn.Module):
         super().__init__()
         self.num_heads = num_heads
 
-    def forward(self, qkv, encoder_kv=None):
+    def forward(self, qkv):
         """Apply QKV attention.
 
         Args:
@@ -183,15 +139,6 @@ class QKVAttention(torch.nn.Module):
         assert width % (3 * self.num_heads) == 0
         ch = width // (3 * self.num_heads)
         q, k, v = qkv.reshape(bs * self.num_heads, ch * 3, length).split(ch, dim=1)
-
-        if encoder_kv is not None:
-            assert encoder_kv.shape[1] == self.num_heads * ch * 2
-            ek, ev = encoder_kv.reshape(bs * self.num_heads, ch * 2, -1).split(
-                ch, dim=1
-            )
-            k = torch.cat([ek, k], dim=-1)
-            v = torch.cat([ev, v], dim=-1)
-
         scale = 1 / math.sqrt(math.sqrt(ch))
         weight = torch.einsum(
             "bct,bcs->bts", q * scale, k * scale

@@ -1,18 +1,13 @@
-"""Lesson 15 - GLIDE: Towards Photorealistic Image Generation and Editing with
-Text-Guided Diffusion Models
+"""Lesson 11 - Image Super-Resolution via Iterative Refinement.
 
-This package implements the GLIDE diffusion model from "GLIDE: Towards Photorealistic
-Image Generation and Editing with Text-Guided Diffusion Models" (https://arxiv.org/abs/2112.10741).
-The GLIDE diffusion model is very similar to DDPM, which two important improvements. First,
-it uses classifier-free guidance to improve the sampling process (and hence necessarily trains
-a joint text-conditional/unconditional score network) and it uses a cross-attention based
-text conditioning in the score network, similar to Latent Diffusion Models, but with a single
-shared transformer projection across layers, rather than the per-layer transformer projection
-in LDM. GLIDE also experimented with CLIP guidance rather than just classifier-free guidance,
-but found that classifier-free guidanec performed better, so we implement that here.
+This module implements the SR3 Image super-resolution diffusion algorithm. The
+only real difference between this model and others (like DDPM) is we concatenate
+the low-resolution image we want to upsample to noisy samples at the super-resolution,
+to condition the model for upsampling. Otherwise, this model is the same as DDPM.
 
-In this package, we are not training a class-conditional model, so we use classifier-free
-guidance on the text conditioning, an jointly train a text-conditional/unconditional model.
+The original paper also used a continuous timestep embedding scheme, rather than
+the discrete timestep embedding scheme. We did not implement that here, but it looks very
+similar to NCSN.
 """
 
 from einops import reduce
@@ -22,9 +17,7 @@ from torchvision import transforms
 from tqdm import tqdm
 from typing import Callable, Dict, List, Optional, Type
 
-from tokenizer.bpe import get_encoder
 from importance_sampling import ImportanceSampler, UniformSampler
-from score_network import MNistUnet
 from utils import (
     cosine_beta_schedule,
     discretized_gaussian_log_likelihood,
@@ -35,19 +28,18 @@ from utils import (
     unnormalize_to_zero_to_one,
     DotConfig,
 )
+from score_network import MNistUnet
 
 
-class GaussianDiffusion_GLIDE(torch.nn.Module):
-    """Core GLIDE Diffusion algorithm, with classifier free guidance.
+class GaussianDiffusion_DDPM(torch.nn.Module):
+    """Core DDPM Diffusion algorithm, with classifier free guidance.
 
-    This is the same core algorithm as DDPM, IDDPM, and Guided Diffusion,
-    with a few changes listed above.
+    This is the same core algorithm as DDPM, IDDPM, and Guided Diffusion.
     """
 
     def __init__(self, config: DotConfig):
         super().__init__()
         self._score_network = MNistUnet(config)
-        self._tokenizer = get_encoder()
         self._num_timesteps = config.model.num_scales
         self._is_v_param = config.model.is_v_param
         self._is_class_conditional = config.model.is_class_conditional
@@ -123,11 +115,7 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
         register_buffer("posterior_mean_coef2", posterior_mean_coef2)
 
     def loss_on_batch(
-        self,
-        images,
-        prompts: List[str],
-        low_resolution_images: Optional[torch.Tensor] = None,
-        y=None,
+        self, images, low_resolution_images: Optional[torch.Tensor] = None, y=None
     ) -> Dict:
         """Calculates the reverse process loss on a batch of images.
 
@@ -141,14 +129,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
         """
         B, _, H, W = images.shape
         device = images.device
-
-        # Convert the prompts into text tokens
-        assert len(prompts) == images.shape[0]
-        tokens = self._tokenizer.tokenize(
-            texts=prompts,
-            context_length=self._config.model.text_context_size,
-            truncate_text=True,
-        ).to(device)
 
         # The images are normalized into the range (-1, 1),
         # from Section 3.3:
@@ -201,27 +181,13 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
                 conditional_y,
             )
 
-        # Drop some of the text tokens so that we can perform classifier-free guidance.
-        conditional_context = tokens
-        unconditional_context = torch.zeros_like(tokens)
-
-        # Sample the unconditional tokens
-        unconditional_probability = torch.rand(size=(tokens.shape[0], 1), device=device)
-        text_tokens = torch.where(
-            unconditional_probability <= self._unconditional_guidance_probability,
-            unconditional_context,
-            conditional_context,
-        )
-
         # Line 5, predict eps_theta given t. Add the two parameters we calculated
         # earlier together, and run the UNet with that input at time t.
         model_output = self._score_network(
             torch.cat([x_t, low_res_x_0], dim=1) if low_res_x_0 is not None else x_t,
             t=t,
             y=y,
-            text_tokens=text_tokens,
         )
-
         if self._is_v_param:
             # If we are a v-param model, the model is predicting
             # both epsilon, and the re-parameterized estimate of the variance.
@@ -269,7 +235,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
 
     def sample(
         self,
-        prompts: List[str],
         low_res_context: Optional[torch.Tensor] = None,
         num_samples: int = 16,
         guidance_fn: Optional[Callable] = None,
@@ -286,14 +251,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
         )
         device = next(self.parameters()).device
         self.eval()
-
-        # Convert the prompts into text tokens
-        assert len(prompts) == num_samples
-        tokens = self._tokenizer.tokenize(
-            texts=prompts,
-            context_length=self._config.model.text_context_size,
-            truncate_text=True,
-        ).to(device)
 
         # Generate latent samples
         # The additional context is the low resolution images
@@ -322,7 +279,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
 
         latent_samples = self._p_sample_loop(
             shape,
-            tokens,
             low_res_x_0,
             guidance_fn,
             classes=classes,
@@ -330,14 +286,14 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
         )
 
         if self._is_class_conditional:
-            latents, _ = latent_samples
+            latents, labels = latent_samples
         else:
             latents = latent_samples
-
+            labels = classes
         # Decode the samples from the latent space
         samples = unnormalize_to_zero_to_one(latents)
         self.train()
-        return samples
+        return samples, labels
 
     def get_classifier_guidance(
         self, classifier: torch.nn.Module, classifier_scale: float
@@ -422,7 +378,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
         self,
         x,
         t,
-        context: torch.Tensor,
         low_res_context: Optional[torch.Tensor],
         epsilon_v_param: Optional[List[torch.Tensor]] = None,
         y=None,
@@ -436,7 +391,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
                 ),
                 t=t,
                 y=y,
-                text_tokens=context,
             )
             if epsilon_v_param is None
             else epsilon_v_param
@@ -477,7 +431,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
         self,
         x,
         t,
-        context: torch.Tensor,
         low_res_context: Optional[torch.Tensor],
         clip_denoised=True,
         epsilon_v_param: Optional[List[torch.Tensor]] = None,
@@ -509,7 +462,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
         epsilon_theta, variance, log_variance = self._pred_epsilon(
             x=x,
             t=t,
-            context=context,
             low_res_context=low_res_context,
             epsilon_v_param=epsilon_v_param,
             y=y,
@@ -522,18 +474,17 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
             if classifier_free_guidance is not None
             else self._classifier_free_guidance
         )
-
-        if cfg >= 0.0:
-            assert context is not None
+        if cfg > 0.0:
+            assert y is not None
 
             # Unconditionally sample the model
             uncond_epsilon_theta, uncond_variance, uncond_log_variance = (
                 self._pred_epsilon(
                     x=x,
                     t=t,
-                    context=torch.zeros_like(context),
                     low_res_context=low_res_context,
                     epsilon_v_param=epsilon_v_param,
+                    y=torch.zeros_like(y),
                 )
             )
             w = cfg
@@ -563,7 +514,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
     def _p_sample_loop(
         self,
         shape,
-        tokens: torch.Tensor,
         low_res_context: Optional[torch.Tensor],
         guidance_fn=None,
         classes=None,
@@ -613,7 +563,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
             x_t_minus_1 = self._p_sample(
                 x_t,
                 t=t,
-                context=tokens,
                 low_res_context=low_res_context,
                 y=y,
                 guidance_fn=guidance_fn,
@@ -629,7 +578,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
         self,
         x,
         t,
-        context: torch.Tensor,
         low_res_context: Optional[torch.Tensor],
         y,
         guidance_fn=None,
@@ -657,7 +605,6 @@ class GaussianDiffusion_GLIDE(torch.nn.Module):
             model_mean, model_variance, model_log_variance = self._p_mean_variance(
                 x=x,
                 t=t,
-                context=context,
                 low_res_context=low_res_context,
                 clip_denoised=True,
                 y=y,
