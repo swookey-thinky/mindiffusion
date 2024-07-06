@@ -1,4 +1,4 @@
-# Lesson 11 - Latent Diffusion Models
+# Lesson 14 - Latent Diffusion Models
 
 In this lesson, we are going to explore one of the key optimizations that allowed larger models like Stable Diffusion to come into existence - latent space training. Namely, every lesson we have looked at until now has built a diffusion model in *pixel* space. That is, the forward and reverse diffusion processes (and training) operate at the same resolution as the images themselves. For MNIST, this isn't that big of a deal, since that resolution is 1x28x28. But for high resolution images, the amount of data is orders of magnitude larger!
 
