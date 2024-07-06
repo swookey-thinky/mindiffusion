@@ -51,27 +51,28 @@ Lesson | Date | Name |Title|Video|Colab|Code
 10 | April 2021 | SR3 | [Image Super-Resolution via Iterative Refinement](https://arxiv.org/abs/2104.07636) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_10)
 11 | May 2021 | Guided Diffusion | [Diffusion Models Beat GANs on Image Synthesis](https://arxiv.org/abs/2105.05233) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_11)
 12 | May 2021 | CDM | [Cascaded Diffusion Models for High Fidelity Image Generation](https://arxiv.org/abs/2106.15282) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_12)
-13 | December 2021 | Latent Diffusion | [High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_13)
-13a | | Stable Diffusion v1 | | | |
-13b | | Stable Diffusion v2 | | | |
-14 | December 2021 | CFG| [Classifier-Free Diffusion Guidance](https://arxiv.org/abs/2207.12598) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_14)
-15 | December 2021 | GLIDE| [GLIDE: Towards Photorealistic Image Generation and Editing with Text-Guided Diffusion Models](https://arxiv.org/abs/2112.10741) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_15)
-16 | February 2022 | | [Progressive Distillation for Fast Sampling of Diffusion Models](https://arxiv.org/abs/2202.00512) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_16)
-17 | April 2022 | DaLL-E 2| [Hierarchical Text-Conditional Image Generation with CLIP Latents](https://arxiv.org/abs/2204.06125) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_17)
-18 | May 2022 | Imagen | [Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding](https://arxiv.org/abs/2205.11487) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_18)
-19 | October 2022 | | [Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747) | | |
-20 | October 2022 | ERNIE-ViLG 2.0 | [ERNIE-ViLG 2.0: Improving Text-to-Image Diffusion Model with Knowledge-Enhanced Mixture-of-Denoising-Experts](https://arxiv.org/abs/2210.15257) | | |
-21 | December 2022 | DiT | [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_21)
-22 | January 2023 | Simple Diffusion | [Simple diffusion: End-to-end diffusion for high resolution images](https://arxiv.org/abs/2301.11093) | | |
-23 | February 2023 | ControlNet | [Adding Conditional Control to Text-to-Image Diffusion Models](https://arxiv.org/abs/2302.05543) | | |
-24 | May 2023 | RAPHAEL | [RAPHAEL: Text-to-Image Generation via Large Mixture of Diffusion Paths](https://arxiv.org/abs/2305.18295) | | |
-25 | June 2023 | Wuerstchen | [Wuerstchen: An Efficient Architecture for Large-Scale Text-to-Image Diffusion Models](https://arxiv.org/abs/2306.00637) | | |
-26 | July 2023 | SDXL | [SDXL: Improving Latent Diffusion Models for High-Resolution Image Synthesis](https://arxiv.org/abs/2307.01952) | | |
-27 | September 2023 | PixArt-α | [PixArt-α: Fast Training of Diffusion Transformer for Photorealistic Text-to-Image Synthesis](https://arxiv.org/abs/2310.00426) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_27)
-28 | October 2023 | DaLL-E 3 | [Improving Image Generation with Better Captions](https://cdn.openai.com/papers/dall-e-3.pdf) | | |
-29 | January 2024 | PIXART-δ | [PIXART-δ: Fast and Controllable Image Generation with Latent Consistency Models](https://arxiv.org/abs/2401.05252) | | |
-30 | March 2024 | Stable Diffusion 3 | [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206) | | |
-31 | March 2024 | PixArt-Σ | [PixArt-Σ: Weak-to-Strong Training of Diffusion Transformer for 4K Text-to-Image Generation](https://arxiv.org/abs/2403.04692) | | |
+13 | July 2021 | VDM | [Variational Diffusion Models](https://arxiv.org/abs/2107.00630) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_13)
+14 | December 2021 | Latent Diffusion | [High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_14)
+14a | | Stable Diffusion v1 | | | |
+14b | | Stable Diffusion v2 | | | |
+15 | December 2021 | CFG| [Classifier-Free Diffusion Guidance](https://arxiv.org/abs/2207.12598) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_15)
+16 | December 2021 | GLIDE| [GLIDE: Towards Photorealistic Image Generation and Editing with Text-Guided Diffusion Models](https://arxiv.org/abs/2112.10741) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_16)
+17 | February 2022 | | [Progressive Distillation for Fast Sampling of Diffusion Models](https://arxiv.org/abs/2202.00512) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_17)
+18 | April 2022 | DaLL-E 2| [Hierarchical Text-Conditional Image Generation with CLIP Latents](https://arxiv.org/abs/2204.06125) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_18)
+19 | May 2022 | Imagen | [Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding](https://arxiv.org/abs/2205.11487) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_18)
+20 | October 2022 | | [Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747) | | |
+21 | October 2022 | ERNIE-ViLG 2.0 | [ERNIE-ViLG 2.0: Improving Text-to-Image Diffusion Model with Knowledge-Enhanced Mixture-of-Denoising-Experts](https://arxiv.org/abs/2210.15257) | | |
+22 | December 2022 | DiT | [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_22)
+23 | January 2023 | Simple Diffusion | [Simple diffusion: End-to-end diffusion for high resolution images](https://arxiv.org/abs/2301.11093) | | |
+24 | February 2023 | ControlNet | [Adding Conditional Control to Text-to-Image Diffusion Models](https://arxiv.org/abs/2302.05543) | | |
+25 | May 2023 | RAPHAEL | [RAPHAEL: Text-to-Image Generation via Large Mixture of Diffusion Paths](https://arxiv.org/abs/2305.18295) | | |
+26 | June 2023 | Wuerstchen | [Wuerstchen: An Efficient Architecture for Large-Scale Text-to-Image Diffusion Models](https://arxiv.org/abs/2306.00637) | | |
+27 | July 2023 | SDXL | [SDXL: Improving Latent Diffusion Models for High-Resolution Image Synthesis](https://arxiv.org/abs/2307.01952) | | |
+28 | September 2023 | PixArt-α | [PixArt-α: Fast Training of Diffusion Transformer for Photorealistic Text-to-Image Synthesis](https://arxiv.org/abs/2310.00426) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_28)
+29 | October 2023 | DaLL-E 3 | [Improving Image Generation with Better Captions](https://cdn.openai.com/papers/dall-e-3.pdf) | | |
+30 | January 2024 | PIXART-δ | [PIXART-δ: Fast and Controllable Image Generation with Latent Consistency Models](https://arxiv.org/abs/2401.05252) | | |
+31 | March 2024 | Stable Diffusion 3 | [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206) | | |
+32 | March 2024 | PixArt-Σ | [PixArt-Σ: Weak-to-Strong Training of Diffusion Transformer for 4K Text-to-Image Generation](https://arxiv.org/abs/2403.04692) | | |
 
 ## Resources
 
