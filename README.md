@@ -51,7 +51,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 10 | April 2021 | SR3 | [Image Super-Resolution via Iterative Refinement](https://arxiv.org/abs/2104.07636) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_10)
 11 | May 2021 | Guided Diffusion | [Diffusion Models Beat GANs on Image Synthesis](https://arxiv.org/abs/2105.05233) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_11)
 12 | May 2021 | CDM | [Cascaded Diffusion Models for High Fidelity Image Generation](https://arxiv.org/abs/2106.15282) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_12)
-13 | May 2021 | VDM | [Variational Diffusion Models](https://arxiv.org/abs/2107.00630) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_13)
+13 | July 2021 | VDM | [Variational Diffusion Models](https://arxiv.org/abs/2107.00630) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_13)
 14 | December 2021 | Latent Diffusion | [High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_14)
 14a | | Stable Diffusion v1 | | | |
 14b | | Stable Diffusion v2 | | | |
