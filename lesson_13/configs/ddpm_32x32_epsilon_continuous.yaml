@@ -1,0 +1,144 @@
+# V parameterized unconditional DDPM model, no learned sigmam using continuous time formulation.
+diffusion:
+  parameterization: "epsilon"
+  # Sampling section determines the size of the sampled output
+  # from the model, and defines the sampling method used
+  sampling:
+    output_channels: 1
+    output_spatial_size: 32
+    target: image_diffusion.samplers.ancestral.AncestralSampler
+    params: {}
+  # The noise scheduler to use with the forward diffusion process.
+  noise_scheduler:
+    target: image_diffusion.scheduler.ContinuousNoiseScheduler
+    params:
+      num_scales: 1000
+      logsnr_schedule: "cosine"
+      loss_type: "l2"
+      logsnr_min: -20
+      logsnr_max: 20
+  importance_sampler:
+    target: image_diffusion.importance_sampling.UniformSampler
+    params:
+      num_timesteps: 1000
+  # A preprocessor to use with the context before sending to the score network.
+  context_preprocessing:
+      # The Prompts Preprocessor converts the list of text prompts in the context
+      # into a batch of text tokens of shape (B, text_context_size)
+      - target: image_diffusion.conditioning.IgnoreContextAdapter
+        params: {}
+  # A preprocessor for input to the model.
+  input_preprocessing:
+    target: image_diffusion.conditioning.IgnoreInputPreprocessor
+    params: {}
+  # Setting for classifier free guidance.
+  classifier_free_guidance:
+    # Classifier-free guidance scale, where the value is >= 1.0
+    classifier_free_guidance: 0.0
+    # Unconditional guidance probability
+    unconditional_guidance_probability: 0.0
+    # The context signals to apply guidance to.
+    signals: []
+    # For classifier free guidance, we need the ability to create an unconditional
+    # context given the conditional context. This unconditional context needs
+    # to be applied in both training and sampling, and will return a new
+    # context dictionary given the original context dictionary.
+    unconditional_context:
+      target: torch.nn.Identity
+      params: {}
+  # Defines the score network for predicting the noise parameter
+  score_network:
+    target: image_diffusion.score_networks.unet.Unet
+    params:
+      # The number of input channels to the model.
+      input_channels: 1
+      # The number of output channels to the model.
+      output_channels: 1
+      # The spatial size of the input to the model.
+      input_spatial_size: 32
+      # The number of features/channels at the start of
+      # the network. This defines the inner dimensions
+      # of the model.
+      num_features: 128
+      # Resnet block channel multipliers.
+      channel_multipliers: [1, 2, 2, 2]
+      # The number of resnet blocks per resolution.
+      num_resnet_blocks: 2
+      # Use scale/shift of the GroupNorm in the timestep embedding.
+      # This is also called Adaptive Group Normalization.
+      use_scale_shift_norm: True
+      # Perform resampling using convolutions.
+      resamp_with_conv: False
+      # BigGAN style resnet block to perform up/down sampling.
+      resblock_updown: False
+      # The type of resnet block to use
+      resnet_block_type: 'biggan'
+      # Dropout scale
+      dropout: 0.1
+      # Does the model include a learned sigma or a fixed sigma.
+      is_learned_sigma: False
+      # True if this is a class conditional model
+      is_class_conditional: False
+      # The number of classes for a class conditional model.
+      # Only used if is_class_conditional=True.
+      num_classes: 10
+      # Defines the attention mechanism used
+      attention:
+        # The resolution to apply attention layers.
+        attention_resolutions: [16]
+        # The number of heads in the attention layers
+        attention_heads: 2
+        # The number of channels in the attention layers
+        attention_channels: 64
+        # True is causal attention masks should be used
+        is_causal: False
+      # Additional conditioning signals for the model. The projections
+      # defined here will be applied before running through the rest of the
+      # score network.
+      conditioning:
+        # The signals (keys in the dictionary) that are available in the conditioning
+        # context.
+        signals: ["timestep"]
+        projections:
+          # A projection to apply to the integer timesteps.
+          timestep:
+            # Defines a projection incorporating the sinusoidal position embedding.
+            # Output size is (B, C, num_features * time_embedding_mult)
+            target: image_diffusion.layers.embedding.TimestepEmbeddingProjection
+            params:
+              num_features: 128
+              time_embedding_mult: 4
+              max_time: 1.0
+        # The context transformer to use at the top of the score network. This transforms
+        # the context with a shared set of parameters.
+        context_transformer_head:
+          # Timestep -> timestep embedding
+          - target: image_diffusion.layers.embedding.RunProjection
+            params:
+              input_context_key: "logsnr_t"
+              output_context_key: "timestep_embedding"
+              projection_key: "timestep"
+        # The context transformer to use at each attention layer. This transforms
+        # the context with a different set of parameters at each attention layer.
+        context_transformer_layer:
+          target: image_diffusion.layers.attention.SpatialCrossAttention
+          params:
+            # The dimensionality of the context signal coming in.
+            # -1 signifies no context coming in, and this defaults to Multi-Head
+            # self attention.
+            context_dim: -1
+            # The number of heads in the attention layer.
+            heads: 2
+            # The dimensionality of each attention head.
+            dim_head: 64
+            # Dropout probability to use in training.
+            dropout: 0.1
+# Describes the dataset used in training.
+data:
+  # Spatial width/height of the data input to the model.
+  image_size: 32
+  # Number of channels in the input data
+  num_channels: 1
+  # The number of classes in the dataset
+  num_classes: 10
+
