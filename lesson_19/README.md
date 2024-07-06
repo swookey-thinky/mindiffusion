@@ -1,4 +1,4 @@
-# Lesson 18 - Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding (Imagen)
+# Lesson 19 - Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding (Imagen)
 
 In this lesson we are going to learn about the Imagen diffusion model from [Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding](https://arxiv.org/abs/2205.11487).
 
