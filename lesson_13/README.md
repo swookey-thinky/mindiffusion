@@ -18,7 +18,7 @@ Follow the instructions from [Requirements For All Lessons](https://github.com/s
 To train the diffusion model, simply run the `train.py` script under this directory in your virtual environment:
 
 ```
-> python train.py
+> python train.py --config_path configs/ddpm_32x32_epsilon_continuous.yaml
 ```
 
 Output files (including sample generated images of the model in progress) are stored by timestep in the `output` directory.
