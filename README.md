@@ -80,6 +80,10 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] CogView ([abstract](https://arxiv.org/abs/2105.13290))
 - [ ] CogView 2 ([abstract](https://arxiv.org/abs/2204.14217))
 - [ ] CogView 3 ([abstract](https://arxiv.org/abs/2403.05121))
+- [ ] Consistency Models ([abstract](https://arxiv.org/abs/2303.01469))
+- [ ] Latent Consistency Models ([abstract](https://arxiv.org/abs/2310.04378))
+- [ ] Scalable Diffusion Models with State Space Backbone ([abstract](https://arxiv.org/abs/2402.05608))
+- [ ] Palette: Image-to-Image Diffusion Models ([abstract](https://arxiv.org/abs/2111.05826))
 
 ## Resources
 
