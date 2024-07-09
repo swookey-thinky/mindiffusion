@@ -74,6 +74,11 @@ Lesson | Date | Name |Title|Video|Colab|Code
 31 | March 2024 | Stable Diffusion 3 | [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206) | | |
 32 | March 2024 | PixArt-Σ | [PixArt-Σ: Weak-to-Strong Training of Diffusion Transformer for 4K Text-to-Image Generation](https://arxiv.org/abs/2403.04692) | | |
 
+## Lessons to Add
+
+- [ ] Emu ([abstract](https://ai.meta.com/research/publications/emu-enhancing-image-generation-models-using-photogenic-needles-in-a-haystack/))
+- [ ] ???
+
 ## Resources
 
 Most of the implementations have been consolidated into a single [image diffusion](https://github.com/swookey-thinky/image_diffusion) repository, which is configurable through YAML files.
