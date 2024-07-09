@@ -79,6 +79,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] Emu ([abstract](https://ai.meta.com/research/publications/emu-enhancing-image-generation-models-using-photogenic-needles-in-a-haystack/))
 - [ ] CogView ([abstract](https://arxiv.org/abs/2105.13290))
 - [ ] CogView 2 ([abstract](https://arxiv.org/abs/2204.14217))
+- [ ] CogView 3 ([abstract](https://arxiv.org/abs/2403.05121))
 
 ## Resources
 
