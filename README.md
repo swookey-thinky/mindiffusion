@@ -85,6 +85,8 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] Scalable Diffusion Models with State Space Backbone ([abstract](https://arxiv.org/abs/2402.05608))
 - [ ] Palette: Image-to-Image Diffusion Models ([abstract](https://arxiv.org/abs/2111.05826))
 - [ ] MultiDiffusion: Fusing Diffusion Paths for Controlled Image Generation ([abstract](https://arxiv.org/abs/2302.08113))
+- [ ] Matryoshka Diffusion Models ([abstract](https://arxiv.org/abs/2310.15111))
+- [ ] On the Importance of Noise Scheduling for Diffusion Models ([abstract](https://arxiv.org/abs/2301.10972))
 
 ## Resources
 
