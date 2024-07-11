@@ -89,6 +89,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] On the Importance of Noise Scheduling for Diffusion Models ([abstract](https://arxiv.org/abs/2301.10972))
 - [ ] Analyzing and Improving the Training Dynamics of Diffusion Models ([abstract](https://arxiv.org/abs/2312.02696))
 - [ ] Elucidating the Design Space of Diffusion-Based Generative Models ([abstract](https://arxiv.org/abs/2206.00364))
+- [ ] Flow Matching for Generative Modeling ([abstract](https://arxiv.org/abs/2210.02747))
 
 ## Resources
 
