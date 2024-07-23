@@ -59,8 +59,8 @@ Lesson | Date | Name |Title|Video|Colab|Code
 16 | December 2021 | GLIDE| [GLIDE: Towards Photorealistic Image Generation and Editing with Text-Guided Diffusion Models](https://arxiv.org/abs/2112.10741) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_16)
 17 | February 2022 | | [Progressive Distillation for Fast Sampling of Diffusion Models](https://arxiv.org/abs/2202.00512) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_17)
 18 | April 2022 | DaLL-E 2| [Hierarchical Text-Conditional Image Generation with CLIP Latents](https://arxiv.org/abs/2204.06125) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_18)
-19 | May 2022 | Imagen | [Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding](https://arxiv.org/abs/2205.11487) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_18)
-20 | September 2022 | | [Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow](https://arxiv.org/abs/2209.03003) | | |
+19 | May 2022 | Imagen | [Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding](https://arxiv.org/abs/2205.11487) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_19)
+20 | September 2022 | | [Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow](https://arxiv.org/abs/2209.03003) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_20)
 21 | October 2022 | ERNIE-ViLG 2.0 | [ERNIE-ViLG 2.0: Improving Text-to-Image Diffusion Model with Knowledge-Enhanced Mixture-of-Denoising-Experts](https://arxiv.org/abs/2210.15257) | | |
 22 | December 2022 | DiT | [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_22)
 23 | January 2023 | Simple Diffusion | [Simple diffusion: End-to-end diffusion for high resolution images](https://arxiv.org/abs/2301.11093) | | |
