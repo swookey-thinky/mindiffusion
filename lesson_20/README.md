@@ -26,5 +26,5 @@ Generated samples will be saved to `output/mnist/rectified_flow_32x32`.
 
 After training the network for 10k steps, the full unconditional rectified flow model is able to generate samples like the below:
 
-![Rectified Flow](https://drive.google.com/uc?export=view&id=1MKyRgPKoPRFHLzd78aTA1K3QHgNm08Px)
+![Rectified Flow](https://drive.google.com/uc?export=view&id=14TOqFXSWiFpeUVnDuMfLRcRDUV5onuKQ)
 
