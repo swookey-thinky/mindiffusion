@@ -90,9 +90,9 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] Analyzing and Improving the Training Dynamics of Diffusion Models ([abstract](https://arxiv.org/abs/2312.02696))
 - [ ] Elucidating the Design Space of Diffusion-Based Generative Models ([abstract](https://arxiv.org/abs/2206.00364))
 - [ ] Flow Matching for Generative Modeling ([abstract](https://arxiv.org/abs/2210.02747))
-- [ ] U-ViT: All are Worth Words: A ViT Backbone for Diffusion Models (https://arxiv.org/abs/2209.12152)
-- [ ] MDTv2: Masked Diffusion Transformer is a Strong Image Synthesizer (https://arxiv.org/abs/2303.14389)
-- [ ] DiffiT: Diffusion Vision Transformers for Image Generation (https://arxiv.org/abs/2312.02139)
+- [ ] U-ViT: All are Worth Words: A ViT Backbone for Diffusion Models ([abstract](https://arxiv.org/abs/2209.12152))
+- [ ] MDTv2: Masked Diffusion Transformer is a Strong Image Synthesizer ([abstract](https://arxiv.org/abs/2303.14389))
+- [ ] DiffiT: Diffusion Vision Transformers for Image Generation ([abstract](https://arxiv.org/abs/2312.02139))
 
 ## Resources
 
