@@ -29,17 +29,17 @@ Generated samples will be saved to `output/flux`.
 
 After training the network for 30k steps, the flux model pipeline is able to generate samples like the below:
 
-<!-- ![Flux](https://drive.google.com/uc?export=view&id=17hrD-Zxreb7XNpETWE4MdfVeqs1fnQXu)
+![Flux](https://drive.google.com/uc?export=view&id=1_r8poe1SJxf8UtT4mmQaTT378m26hD-F)
 
 The prompts we used for generation above were:
 
 <pre>
-one two 1 2 one five 0 one 
-2 0 5 two four zero eight five 
-eight 0 8 five three nine 2 1 
-0 6 four seven five 1 4 0 
-0 seven four 1 9 zero one three 
-3 nine zero 8 nine two 5 7 
-zero 8 0 2 four 9 6 eight 
-9 4 seven two eight eight one one 
-</pre> -->
+3 5 six 5 six 9 six four 
+5 zero eight one six 9 1 three 
+two 2 8 8 zero six seven 5 
+4 6 0 3 three 6 six four 
+one 5 nine 2 5 6 2 three 
+six four 0 4 one 8 eight five 
+0 8 5 two four nine seven 1 
+seven four four 2 eight 9 8 4 
+</pre>
