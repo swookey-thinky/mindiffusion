@@ -73,6 +73,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 30 | January 2024 | PIXART-δ | [PIXART-δ: Fast and Controllable Image Generation with Latent Consistency Models](https://arxiv.org/abs/2401.05252) | | |
 31 | March 2024 | Stable Diffusion 3 | [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206) | | |
 32 | March 2024 | PixArt-Σ | [PixArt-Σ: Weak-to-Strong Training of Diffusion Transformer for 4K Text-to-Image Generation](https://arxiv.org/abs/2403.04692) | | |
+33 | August 2024 | Flux | [Flux Announcement](https://blackforestlabs.ai/announcing-black-forest-labs/) | | |
 
 ## Lessons to Add
 
@@ -93,6 +94,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] U-ViT: All are Worth Words: A ViT Backbone for Diffusion Models ([abstract](https://arxiv.org/abs/2209.12152))
 - [ ] MDTv2: Masked Diffusion Transformer is a Strong Image Synthesizer ([abstract](https://arxiv.org/abs/2303.14389))
 - [ ] DiffiT: Diffusion Vision Transformers for Image Generation ([abstract](https://arxiv.org/abs/2312.02139))
+- [ ] Scaling Vision Transformers to 22 Billion Parameters ([abstract](https://arxiv.org/abs/2302.05442))
 
 ## Resources
 
