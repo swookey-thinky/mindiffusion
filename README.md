@@ -95,6 +95,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] MDTv2: Masked Diffusion Transformer is a Strong Image Synthesizer ([abstract](https://arxiv.org/abs/2303.14389))
 - [ ] DiffiT: Diffusion Vision Transformers for Image Generation ([abstract](https://arxiv.org/abs/2312.02139))
 - [ ] Scaling Vision Transformers to 22 Billion Parameters ([abstract](https://arxiv.org/abs/2302.05442))
+- [ ] DiG: Scalable and Efficient Diffusion Models with Gated Linear Attention ([abstract](https://arxiv.org/abs/2405.18428))
 
 ## Resources
 
