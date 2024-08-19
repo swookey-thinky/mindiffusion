@@ -99,6 +99,6 @@ Lesson | Date | Name |Title|Video|Colab|Code
 
 ## Resources
 
-Most of the implementations have been consolidated into a single [image diffusion](https://github.com/swookey-thinky/image_diffusion) repository, which is configurable through YAML files.
+Most of the implementations have been consolidated into a single [image and video diffusion](https://github.com/swookey-thinky/xdiffusion) repository, which is configurable through YAML files.
 
-If you are interested Video Diffusion Models, take a look through [video diffusion models](https://github.com/swookey-thinky/video_diffusion) where we are adding all of the latest video diffusion model paper implementations, on an equivalent MNIST dataset for video.
+If you are interested Video Diffusion Models, take a look through [video diffusion models](https://github.com/swookey-thinky/xdiffusion) where we are adding all of the latest video diffusion model paper implementations, on an equivalent MNIST dataset for video.
