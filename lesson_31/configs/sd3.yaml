@@ -1,0 +1,103 @@
+# Flux based rectified flow model.
+diffusion:
+  parameterization: "rectified_flow"
+  # Sampling section determines the size of the sampled output
+  # from the model, and defines the sampling method used
+  sampling:
+    output_channels: 1
+    output_spatial_size: 32
+    target: xdiffusion.samplers.rectified_flow.AncestralSampler
+    params: {}
+  # The noise scheduler to use with the forward diffusion process.
+  noise_scheduler:
+    target: xdiffusion.scheduler.DiscreteRectifiedFlowNoiseScheduler
+    params:
+      # The number of noise scales
+      steps: 1000
+      # The maximum time
+      max_time: 1.0
+  sde:
+    target: xdiffusion.sde.rectified_flow.RectifiedFlow
+    params:
+      N: 1000
+      T: 1.0
+  # A preprocessor to use with the context before sending to the score network.
+  context_preprocessing:
+      # The Prompts Preprocessor converts the list of text prompts in the context
+      # into a batch of text tokens of shape (B, text_context_size)
+    - target: xdiffusion.context.SD3TextPromptsPreprocessor
+      params:
+        first_clip_model_name: "openai/clip-vit-large-patch14"
+        first_clip_max_length: 77
+        second_clip_model_name: "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k"
+        second_clip_max_length: 77
+        t5_model_name: "google/t5-v1_1-base"
+        t5_max_length: 128
+  # A preprocessor for input to the model.
+  input_preprocessing:
+    target: xdiffusion.context.IgnoreInputPreprocessor
+    params: {}
+
+  # Setting for classifier free guidance.
+  classifier_free_guidance:
+    # Classifier-free guidance scale, where the value is >= 1.0
+    classifier_free_guidance: 1.0
+    # Unconditional guidance probability
+    unconditional_guidance_probability: 0.2
+    # The context signals to apply guidance to.
+    signals: ["text_prompts"]
+    # For classifier free guidance, we need the ability to create an unconditional
+    # context given the conditional context. This unconditional context needs
+    # to be applied in both training and sampling, and will return a new
+    # context dictionary given the original context dictionary.
+    unconditional_context:
+      target: xdiffusion.context.UnconditionalTextPromptsAdapter
+      params: {}
+  # Defines the score network for predicting the noise parameter
+  score_network:
+    target: xdiffusion.score_networks.sd3.SD3Transformer2DModel
+    params:
+      input_spatial_size: 32
+      # Model input channels
+      input_channels: 1
+      is_learned_sigma: False
+      is_class_conditional: False
+      sample_size: 32
+      patch_size: 8
+      in_channels: 1
+      out_channels: 1
+      num_layers: 12
+      attention_head_dim: 64
+      num_attention_heads: 6
+      # The joint CLIP/T5 prompt embeddings
+      joint_attention_dim: 2048
+      # Dimensions to project the joint CLIP/T5 prompts to.
+      # Must match attention_head_dim*num_attention_heads.
+      caption_projection_dim: 384
+      # Dimensions of the combined CLIP pooled projections.
+      pooled_projection_dim: 2048
+      # Maximum number of position embeddings in a grid - sqrt(num_patches)
+      pos_embed_max_size: 4
+      # Additional conditioning signals for the model. The projections
+      # defined here will be applied before running through the rest of the
+      # score network.
+      conditioning:
+        # The signals (keys in the dictionary) that are available in the conditioning
+        # context.
+        signals: []
+        projections: {}
+        # The context transformer to use at the top of the score network. This transforms
+        # the context with a shared set of parameters.
+        context_transformer_head:
+          # Timestep -> timestep embedding
+          - target: torch.nn.Identity
+            params: {}
+# Describes the dataset used in training.
+data:
+  # Spatial width/height of the data input to the model.
+  image_size: 32
+  # Number of channels in the input data
+  num_channels: 1
+  # The number of classes in the dataset
+  num_classes: 10
+
