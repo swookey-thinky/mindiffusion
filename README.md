@@ -71,7 +71,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 28 | September 2023 | PixArt-α | [PixArt-α: Fast Training of Diffusion Transformer for Photorealistic Text-to-Image Synthesis](https://arxiv.org/abs/2310.00426) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_28)
 29 | October 2023 | DaLL-E 3 | [Improving Image Generation with Better Captions](https://cdn.openai.com/papers/dall-e-3.pdf) | | |
 30 | January 2024 | PIXART-δ | [PIXART-δ: Fast and Controllable Image Generation with Latent Consistency Models](https://arxiv.org/abs/2401.05252) | | |
-31 | March 2024 | Stable Diffusion 3 | [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206) | | |
+31 | March 2024 | Stable Diffusion 3 | [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_31)
 32 | March 2024 | PixArt-Σ | [PixArt-Σ: Weak-to-Strong Training of Diffusion Transformer for 4K Text-to-Image Generation](https://arxiv.org/abs/2403.04692) | | |
 33 | August 2024 | Flux | [Flux Announcement](https://blackforestlabs.ai/announcing-black-forest-labs/) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_33)
 
