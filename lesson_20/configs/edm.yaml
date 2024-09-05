@@ -1,0 +1,115 @@
+# DDPM++ architecture with EDM pre-conditioning and loss.
+target: xdiffusion.diffusion.edm.GaussianDiffusion_EDM
+diffusion:
+  # Sampling section determines the size of the sampled output
+  # from the model, and defines the sampling method used
+  sampling:
+    output_channels: 1
+    output_spatial_size: 32
+    target: xdiffusion.samplers.edm.StochasticSampler
+    params:
+      num_steps: 18
+      sigma_min: 0.002
+      sigma_max: 80
+      rho: 7
+      S_churn: 0
+      S_min: 0
+      S_max: .inf
+      S_noise: 1
+  # A preprocessor to use with the context before sending to the score network.
+  context_preprocessing:
+      # The Prompts Preprocessor converts the list of text prompts in the context
+      # into a batch of text tokens of shape (B, text_context_size)
+      - target: xdiffusion.context.IgnoreContextAdapter
+        params: {}
+  # A preprocessor for input to the model.
+  input_preprocessing:
+    target: xdiffusion.context.IgnoreInputPreprocessor
+    params: {}
+  # Setting for classifier free guidance.
+  classifier_free_guidance:
+    # Classifier-free guidance scale, where the value is >= 1.0
+    classifier_free_guidance: 0.0
+    # Unconditional guidance probability
+    unconditional_guidance_probability: 0.0
+    # The context signals to apply guidance to.
+    signals: []
+    # For classifier free guidance, we need the ability to create an unconditional
+    # context given the conditional context. This unconditional context needs
+    # to be applied in both training and sampling, and will return a new
+    # context dictionary given the original context dictionary.
+    unconditional_context:
+      target: torch.nn.Identity
+      params: {}
+  # Loss function to use in training
+  loss:
+    target: xdiffusion.diffusion.edm.EDMLoss
+    params:
+      P_mean: -1.2
+      P_std: 1.2
+      sigma_data: 0.5
+  # Defines the score network for predicting the noise parameter
+  score_network:
+    target: xdiffusion.score_networks.edm.EDMPrecond
+    params:
+      # Image resolution.
+      img_resolution: 32
+      # Number of color channels.
+      img_channels: 1
+      # Number of class labels, 0 = unconditional.
+      label_dim: 0
+      # Execute the underlying model at FP16 precision?
+      use_fp16: False
+      # Minimum supported noise level.
+      sigma_min: 0
+      # Maximum supported noise level.
+      sigma_max: .inf
+      # Expected standard deviation of the training data.
+      sigma_data: 0.5
+      # The underlying score network
+      model:
+        target: xdiffusion.score_networks.edm.SongUNet
+        params:
+          # Image resolution at input/output.
+          img_resolution: 32
+          # Number of color channels at input.
+          in_channels: 1
+          # Number of color channels at output.
+          out_channels: 1
+          # Number of class labels, 0 = unconditional.
+          label_dim: 0
+          # Augmentation label dimensionality, 0 = no augmentation.
+          augment_dim: 0
+          # Base multiplier for the number of channels.
+          model_channels: 128
+          # Per-resolution multipliers for the number of channels.
+          channel_mult: [2,2,2,]
+          # Multiplier for the dimensionality of the embedding vector.
+          channel_mult_emb: 4
+          # Number of residual blocks per resolution.
+          num_blocks: 4
+          # List of resolutions with self-attention.
+          attn_resolutions: [16]
+          # Dropout probability of intermediate activations.
+          dropout: 0.10
+          # Dropout probability of class labels for classifier-free guidance.
+          label_dropout: 0
+          # Timestep embedding type: 'positional' for DDPM++, 'fourier' for NCSN++.
+          embedding_type: "positional"
+          # Timestep embedding size: 1 for DDPM++, 2 for NCSN++.
+          channel_mult_noise: 1
+          # Encoder architecture: 'standard' for DDPM++, 'residual' for NCSN++.
+          encoder_type: "standard"
+          # Decoder architecture: 'standard' for both DDPM++ and NCSN++.
+          decoder_type: "standard"
+          # Resampling filter: [1,1] for DDPM++, [1,3,3,1] for NCSN++.
+          resample_filter: [1,1]
+# Describes the dataset used in training.
+data:
+  # Spatial width/height of the data input to the model.
+  image_size: 32
+  # Number of channels in the input data
+  num_channels: 1
+  # The number of classes in the dataset
+  num_classes: 10
+
