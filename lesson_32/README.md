@@ -1,4 +1,4 @@
-# Lesson 33 - Stable Diffusion 3 - Scaling Rectified Flow Transformers for High-Resolution Image Synthesis
+# Lesson 32 - Stable Diffusion 3 - Scaling Rectified Flow Transformers for High-Resolution Image Synthesis
 
 [![python](https://img.shields.io/badge/Python-3.9-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
 [![pytorch](https://img.shields.io/badge/PyTorch-2.0.0-EE4C2C.svg?style=flat&logo=pytorch)](https://pytorch.org)

@@ -1,4 +1,4 @@
-# Lesson 20 - Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow
+# Lesson 21 - Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow
 
 In this lesson we are going to learn about a rectified flow diffusion model from [Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow](https://arxiv.org/abs/2209.03003).
 

@@ -1,4 +1,4 @@
-# Lesson 22 - Scalable Diffusion Models with Transformers (DiT)
+# Lesson 23 - Scalable Diffusion Models with Transformers (DiT)
 
 In this lesson we are going to learn about the DiT diffusion model from [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748).
 
