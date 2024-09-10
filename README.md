@@ -98,6 +98,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] DiffiT: Diffusion Vision Transformers for Image Generation ([abstract](https://arxiv.org/abs/2312.02139))
 - [ ] Scaling Vision Transformers to 22 Billion Parameters ([abstract](https://arxiv.org/abs/2302.05442))
 - [ ] DiG: Scalable and Efficient Diffusion Models with Gated Linear Attention ([abstract](https://arxiv.org/abs/2405.18428))
+- [ ] DiM: Diffusion Mamba for Efficient High-Resolution Image Synthesis ([abstract](https://arxiv.org/abs/2405.14224))
 
 ## Resources
 
