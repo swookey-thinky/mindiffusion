@@ -99,6 +99,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] Scaling Vision Transformers to 22 Billion Parameters ([abstract](https://arxiv.org/abs/2302.05442))
 - [ ] DiG: Scalable and Efficient Diffusion Models with Gated Linear Attention ([abstract](https://arxiv.org/abs/2405.18428))
 - [ ] DiM: Diffusion Mamba for Efficient High-Resolution Image Synthesis ([abstract](https://arxiv.org/abs/2405.14224))
+- [ ] IP-Adapter: Text Compatible Image Prompt Adapter for Text-to-Image Diffusion Models ([abstract](https://arxiv.org/abs/2308.06721))
 
 ## Resources
 
