@@ -103,6 +103,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] JeDi: Joint-Image Diffusion Models for Finetuning-Free Personalized Text-to-Image Generation ([abstract](https://arxiv.org/abs/2407.06187))
 - [ ] Adversarial Diffusion Distillation ([abstract](https://arxiv.org/abs/2311.17042))
 - [ ] Discrete Predictor-Corrector Diffusion Models for Image Synthesis ([abstract](https://openreview.net/forum?id=VM8batVBWvg))
+- [ ] One-step Diffusion with Distribution Matching Distillation ([abstract](https://arxiv.org/abs/2311.18828))
 
 ## Resources
 
