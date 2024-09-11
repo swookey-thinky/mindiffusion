@@ -100,6 +100,8 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] DiG: Scalable and Efficient Diffusion Models with Gated Linear Attention ([abstract](https://arxiv.org/abs/2405.18428))
 - [ ] DiM: Diffusion Mamba for Efficient High-Resolution Image Synthesis ([abstract](https://arxiv.org/abs/2405.14224))
 - [ ] IP-Adapter: Text Compatible Image Prompt Adapter for Text-to-Image Diffusion Models ([abstract](https://arxiv.org/abs/2308.06721))
+- [ ] JeDi: Joint-Image Diffusion Models for Finetuning-Free Personalized Text-to-Image Generation ([abstract](https://arxiv.org/abs/2407.06187))
+- [ ] Adversarial Diffusion Distillation ([abstract](https://arxiv.org/abs/2311.17042))
 
 ## Resources
 
