@@ -105,6 +105,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] Discrete Predictor-Corrector Diffusion Models for Image Synthesis ([abstract](https://openreview.net/forum?id=VM8batVBWvg))
 - [ ] One-step Diffusion with Distribution Matching Distillation ([abstract](https://arxiv.org/abs/2311.18828))
 - [ ] Salient Object-Aware Background Generation using Text-Guided Diffusion Models ([abstract](https://arxiv.org/abs/2404.10157))
+- [ ] Versatile Diffusion ([abstract](https://arxiv.org/abs/2211.08332))
 
 
 ## Resources
