@@ -109,6 +109,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 - [ ] One-step Diffusion with Distribution Matching Distillation ([abstract](https://arxiv.org/abs/2311.18828))
 - [ ] Salient Object-Aware Background Generation using Text-Guided Diffusion Models ([abstract](https://arxiv.org/abs/2404.10157))
 - [ ] Versatile Diffusion ([abstract](https://arxiv.org/abs/2211.08332))
+- [ ] D3PM: Structured Denoising Diffusion Models in Discrete State-Spaces ([abstract](https://arxiv.org/abs/2107.03006))
 
 
 ## Resources
