@@ -16,6 +16,8 @@ Each lesson is in its own subdirectory, and we have ordered the lessons in histo
 
 Since every lesson is meant to be trained in real time with minimal cost, most of the lessons are restricted to training on the MNIST dataset, simply because it is quick to train and easy to visualize.
 
+For even more diffusion models, including Audio and Video diffusion models, check out the [xdiffusion](https://github.com/swookey-thinky/xdiffusion) respository, which is a unified modeling framework for image, audio, and video diffusion modeling.
+
 ## Requirements for All Lessons
 
 All lessons are built using PyTorch and written in Python 3. To setup an environment to run all of the lessons, we suggest using conda or venv:
