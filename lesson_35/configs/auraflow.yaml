@@ -1,0 +1,127 @@
+# Auraflow, a rectified flow model.
+diffusion:
+  parameterization: "rectified_flow"
+  # Sampling section determines the size of the sampled output
+  # from the model, and defines the sampling method used
+  sampling:
+    output_channels: 1
+    output_spatial_size: 32
+    target: xdiffusion.samplers.rectified_flow.AncestralSampler
+    params: {}
+  # The noise scheduler to use with the forward diffusion process.
+  noise_scheduler:
+    target: xdiffusion.scheduler.DiscreteRectifiedFlowNoiseScheduler
+    params:
+      # The number of noise scales
+      steps: 1000
+      # The maximum time
+      max_time: 1.0
+      # The distribution for sample times
+      distribution: "logit-normal"
+  sde:
+    target: xdiffusion.sde.rectified_flow.RectifiedFlow
+    params:
+      N: 1000
+      T: 1.0
+  # A preprocessor to use with the context before sending to the score network.
+  context_preprocessing:
+      - target: xdiffusion.layers.embedding.T5TextEmbedder
+        params:
+          # The max length of the text token sequence
+          max_length: 128
+          # The name of the T5 text model to use
+          version: "google/t5-v1_1-base"
+          context_key: "t5_text_embeddings"
+  # A preprocessor for input to the model.
+  input_preprocessing:
+    target: xdiffusion.context.IgnoreInputPreprocessor
+    params: {}
+  # Setting for classifier free guidance.
+  classifier_free_guidance:
+    # Classifier-free guidance scale, where the value is >= 1.0
+    classifier_free_guidance: 1.0
+    # Unconditional guidance probability
+    unconditional_guidance_probability: 0.2
+    # The context signals to apply guidance to.
+    signals: ["text_prompts"]
+    # For classifier free guidance, we need the ability to create an unconditional
+    # context given the conditional context. This unconditional context needs
+    # to be applied in both training and sampling, and will return a new
+    # context dictionary given the original context dictionary.
+    unconditional_context:
+      target: xdiffusion.context.UnconditionalTextPromptsAdapter
+      params: {}
+  # Defines the score network for predicting the noise parameter
+  score_network:
+    # Basic AuraFlow network. The original AuraFlow model used an
+    # aspect ratio (hidden_dim/num_layers) ~ 0.85, with a hidden_dim=3072
+    # and num_layers=36. We are going to match our DiT implementation with
+    # num_layers=12, so we will use hidden_dim=1024 to match the same "aspect ratio".
+    # The original implementation used 32 DiT blocks and 4 MMDiT blocks, so we will
+    # use that as well. Compare that to the Flux implementation, which used
+    # a 1:2 ratio of single to double stream blocks (19 double and 38 single).
+    # We will use 2 double and 12 single blocks here, for comparison.
+    target: xdiffusion.score_networks.auraflow.AuraFlow
+    params:
+      # MNIST image size
+      input_spatial_size: 32
+      # Model input channels
+      input_channels: 1
+      # Number of output channels.
+      out_channels: 1
+      # Patch size to turn the input data into small patches.
+      patch_size: 8
+      # The number of layers of MMDiT Transformer blocks to use.
+      num_mmdit_layers: 2
+      # The number of layers of Transformer blocks to use.
+      # These blocks use concatenated image and text representations.
+      num_single_dit_layers: 12
+      # The number of channels in each head. attention_head_dim*num_attention_heads=hidden_size
+      attention_head_dim: 256
+      # The number of heads to use for multi-head attention.
+      num_attention_heads: 4
+      # The number of cross-attention dimensions. This is the dimensionality
+      # of the T5 text embeddings.
+      joint_attention_dim: 768
+      #  Number of dimensions to use when projecting the cross-attention
+      # (T5 text) embeddings.
+      caption_projection_dim: 1024
+      # Maximum positions to embed from the image latents.
+      pos_embed_max_size: 1024
+      # True if this model learns the variance.
+      is_learned_sigma: False
+      # True if this model is class conditional.
+      is_class_conditional: False
+      # Additional conditioning signals for the model. The projections
+      # defined here will be applied before running through the rest of the
+      # score network.
+      conditioning:
+        # The signals (keys in the dictionary) that are available in the conditioning
+        # context.
+        signals: []
+        projections: {}
+        # The context transformer to use at the top of the score network. This transforms
+        # the context with a shared set of parameters.
+        context_transformer_head:
+          # Timestep -> timestep embedding
+          - target: torch.nn.Identity
+            params: {}
+# Describes the dataset used in training.
+data:
+  # Spatial width/height of the data input to the model.
+  image_size: 32
+  # Number of channels in the input data
+  num_channels: 1
+  # The number of classes in the dataset
+  num_classes: 10
+
+# Describes parameters of the training process.
+training:
+  # Batch size to use for training
+  batch_size: 64
+  # The number of steps to perform gradient accumulation
+  gradient_accumulation_steps: 1
+  # Mixed precision training settings
+  mixed_precision: "bf16"
+  # The dataset we are training on
+  dataset: "image/mnist"
