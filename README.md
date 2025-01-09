@@ -80,6 +80,7 @@ Lesson | Date | Name |Title|Video|Colab|Code
 35 | July 2024 | AuraFlow | [Introducing AuraFlow v0.1, an Open Exploration of Large Rectified Flow Models](https://blog.fal.ai/auraflow/) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_35) 
 36 | August 2024 | Flux | [Flux Announcement](https://blackforestlabs.ai/announcing-black-forest-labs/) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_36)
 37 | October 2024 | Sana | [SANA: Efficient High-Resolution Image Synthesis with Linear Diffusion Transformers](https://arxiv.org/abs/2410.10629) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_37)
+38 | October 2024 | Stable Diffusion 3.5 | [Introducing Stable Diffusion 3.5](https://stability.ai/news/introducing-stable-diffusion-3-5) | | | [code](https://github.com/swookey-thinky/mindiffusion/tree/main/lesson_38)
 
 
 ## Lessons to Add
